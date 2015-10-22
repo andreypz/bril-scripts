@@ -156,7 +156,7 @@ dates_to_add = [
   ["08","25"]
 ]
 
-for month in ['05']:
+for month in ['05','06','07','08','09','10']:
     for day in xrange(1,31):
         if day<10:
             a = "0"+str(day)
@@ -167,9 +167,10 @@ for month in ['05']:
 print dates_to_add
 
 for d in dates_to_add:
-    fileName = "bptx_mon_timing_2015_"+d[0]+"_"+d[1]+"_UTC"
-
-    DATAPATH = '../DATA/'
-    convertToROOT(DATAPATH, fileName)
+  fileName = "bptx_mon_timing_2015_"+d[0]+"_"+d[1]+"_UTC"
+  
+  DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
+  # DATAPATH = '../DATA/'
+  convertToROOT(DATAPATH, fileName)
 
 
