@@ -44,6 +44,14 @@ from ROOT import MyStruct
 
 
 def convertToROOT(path, ascii_file):
+    try:
+      ascifilename = path+'/'+ascii_file+'.txt'
+      spamReader = csv.reader(open(ascifilename, 'rb'), delimiter=' ', skipinitialspace=True)
+      print "ASCI file name =", ascifilename
+    except IOError:
+      print 'File %s does not exist' % (ascifilename)
+      return
+
     stuff = MyStruct()
     
     root_fileName = path+'/root/'+ascii_file+'.root'
@@ -59,13 +67,6 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
 
     timeTree.Branch("vars5",  AddressOf( stuff, 'daTime' ), "daTime/l")
 
-    try:
-        ascifilename = path+'/ascii/'+ascii_file+'.txt'
-        spamReader = csv.reader(open(ascifilename, 'rb'), delimiter=' ', skipinitialspace=True)
-        print "ASCI file name =", ascifilename
-    except IOError:
-        print 'File %s does not exist' % (ascifilename)
-        return
     i=0
     for row in spamReader:
         # if i>500: break
@@ -149,9 +150,13 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
 '''
 #print beginTime, str(beginTime.Convert())
     
-dates_to_add = [["05","01"],]
+dates_to_add = [
+  ["08","23"],
+  ["08","24"],
+  ["08","25"]
+]
 
-for month in ['05', '06']:
+for month in ['05']:
     for day in xrange(1,31):
         if day<10:
             a = "0"+str(day)
@@ -164,6 +169,7 @@ print dates_to_add
 for d in dates_to_add:
     fileName = "bptx_mon_timing_2015_"+d[0]+"_"+d[1]+"_UTC"
 
-    convertToROOT("./DATA/", fileName)
+    DATAPATH = '../DATA/'
+    convertToROOT(DATAPATH, fileName)
 
 

@@ -12,7 +12,8 @@ beginTime  = TDatime(2011,12,01,01,00,00)
 stableTime = TDatime(2011,12,01,01,00,00)
 endTime    = TDatime(2011,12,01,23,00,00)
 
-c = f.LHCFills(3858)
+# This will over-write the Times above:
+c = f.LHCFills(4463)
 
 def createDir(myDir):
   if not os.path.exists(myDir):
@@ -23,10 +24,10 @@ def createDir(myDir):
       print myDir, 'already exists'
 
 
-print c.Fill()
-print c.Title()
+print 'Fill = ', c.Fill()
+# print c.Title()
 c.Begin().Print()
-print c.Begin().GetDay()
+print 'Fill begin Day= ', c.Begin().GetDay()
 fill = c.Fill()
 plotTitle = ';'
 
@@ -35,7 +36,7 @@ stableTime = c.Stable()
 endTime    = c.End()
 plotTitle = c.Title()
 
-path = "./DATA/"
+path = "../DATA/"
 chain = TChain("bunchTree");
 chain.Add(path+"root/all_bunches.root")
 
@@ -57,7 +58,9 @@ bptx2_wrt_orbit2  = -25.79339
 bptx2_wrt_orbit1  = bptx2_wrt_orbit2+orbit2_wrt_orbit1
 #print beginTime, str(beginTime.Convert())
 
-gROOT.ProcessLine(".L     /home/andreypz/Dropbox/tdrstyle.C")
+gROOT.ProcessLine(".L ~/tdrstyle.C")
+#gROOT.ProcessLine(".L /home/andreypz/Dropbox/tdrstyle.C")
+
 setTDRStyle()
 gStyle.SetTimeOffset(beginTime.Convert());
 gStyle.SetLabelSize(0.03,"X");
@@ -69,8 +72,8 @@ duration = endTime.Convert() - beginTime.Convert()
 
 
 bunches = {'1': bptx1_wrt_orbit1  - 0.003,
-           '3': bptx1_wrt_orbit1  + 0.2  -0.004,
-           '5': bptx1_wrt_orbit1  + 0.2*2-0.005,
+           #'51': bptx1_wrt_orbit1  + 0.2  -0.004
+           #'5': bptx1_wrt_orbit1  + 0.2*2-0.005,
            #'4': bptx1_wrt_orbit1  + 0.2*9-0.007
            }
 
@@ -82,20 +85,21 @@ createDir(outDir)
 
 
 
-chain.Draw('b1_bunches>>pat1(3456, 0,3456)', 'daTime>'+ stable + '&& daTime<'+end, 'hist')
+MagicNumber = '3564'
+chain.Draw('b1_bunches>>pat1('+MagicNumber+', 0,'+MagicNumber+')', 'daTime>'+ stable + '&& daTime<'+end, 'hist')
 c1.SaveAs(outDir+"/"+'fill_'+str(fill)+"_B1_pattern.png")
-chain.Draw('b2_bunches>>pat2(3456, 0,3456)', 'daTime>'+ stable + '&& daTime<'+end, 'hist')
+chain.Draw('b2_bunches>>pat2('+MagicNumber+', 0,'+MagicNumber+')', 'daTime>'+ stable + '&& daTime<'+end, 'hist')
 c1.SaveAs(outDir+"/"+'fill_'+str(fill)+"_B2_pattern.png")
 
 Nbunches = 0
-for binN in xrange(0,3456):
+for binN in xrange(0,int(MagicNumber)):
   if pat1.GetBinContent(binN)>10:
     Nbunches+=1
     #print Nbunches, binN-1, pat1.GetBinContent(binN) 
     b1_bunches.append(binN-1)
 
 Nbunches = 0
-for binN in xrange(0,3456):
+for binN in xrange(0,int(MagicNumber)):
   if pat2.GetBinContent(binN)>10:
     Nbunches+=1
     #print Nbunches, binN-1, pat2.GetBinContent(binN) 
@@ -118,9 +122,9 @@ print 'B1  = ', b1_bunches
 print 'B2  = ', b2_bunches
 print '\n\n AND  = ', bx_AND
 print 'XORS = ', b1_XOR, b2_XOR
+print "\n N_B1 = ",len(b1_bunches), "N_B2 = ", len(b2_bunches)
 print "N_AND = ",len(bx_AND), "N_OR = ", len(bx_OR)
     
-
 
 def makeHists(var, names, shift, lim, bunch):
   # This function does not work for some reason
@@ -169,15 +173,19 @@ def makeHists(var, names, shift, lim, bunch):
 
 for bb, sh in bunches.iteritems():
 
-    print bb, sh
+    print 'bb and sh =', bb, sh
 
     posb1 = [i for i,x in enumerate(b1_bunches) if x == int(bb)]
     posb2 = [i for i,x in enumerate(b2_bunches) if x == int(bb)]
 
-    print posb1, posb2
-    b1 = str(posb1[0])
-    b2 = str(posb2[0])
-
+    print 'Position of the BX=%s in the arrays, B1 and B2 ' % bb, posb1, posb2
+    try:
+      b1 = str(posb1[0])
+      b2 = str(posb2[0])
+    except IndexError:
+      print 'Sorry, no bunches found. Need to exit'
+      exit(0)
+      
     """
     shift = str(sh)+'e-6'
 

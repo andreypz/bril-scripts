@@ -7,7 +7,7 @@ from array import *
 from  ROOT import *
 import fill_class as f
 
-c = f.LHCFills(2343)
+c = f.LHCFills(2466)
 
 c.Begin().Print()
 fill = c.Fill()
@@ -16,7 +16,7 @@ stableTime = c.Stable()
 endTime    = c.End()
 plotTitle  = c.Title()
 
-path = "/home/andreypz/Dropbox/BPTXmon_data/"
+path = "../DATA/"
 
 chain = TChain("cogTree");
 chain.Add(path+"root/bptx_mon_cogging_2011_12_05_UTC.root")

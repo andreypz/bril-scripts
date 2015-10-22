@@ -35,13 +35,10 @@ TDatime beginTime(2011,12,01,13,00,00);\
 from ROOT import MyStruct
 
 
-
-
-
 def convertToROOT(path, ascii_file):
 
     try:
-        ascifilename = path+'/ascii/'+ascii_file+'.txt'
+        ascifilename = path+'/'+ascii_file+'.txt'
         spamReader = csv.reader(open(ascifilename, 'rb'), delimiter=' ', skipinitialspace=True)
     except IOError:
         print 'File %s does not exist' % (ascifilename)
@@ -50,21 +47,22 @@ def convertToROOT(path, ascii_file):
 
     stuff = MyStruct()
 
-
+    ArrSize = 3700
+    
     nB1          = array('i', [ 0 ] )
     nB2          = array('i', [ 0 ] )
-    b1_bunches   = array('i', 4000*[0])
-    b2_bunches   = array('i', 4000*[0])
-    b1_time_zc   = array('f', 4000*[0])
-    b2_time_zc   = array('f', 4000*[0])
-    b1_time_le   = array('f', 4000*[0])
-    b2_time_le   = array('f', 4000*[0])
-    b1_amp       = array('f', 4000*[0])
-    b2_amp       = array('f', 4000*[0])
-    b1_half_int  = array('f', 4000*[0])
-    b2_half_int  = array('f', 4000*[0])
-    b1_len       = array('f', 4000*[0])
-    b2_len       = array('f', 4000*[0])
+    b1_bunches   = array('i', ArrSize*[0])
+    b2_bunches   = array('i', ArrSize*[0])
+    b1_time_zc   = array('f', ArrSize*[0])
+    b2_time_zc   = array('f', ArrSize*[0])
+    #b1_time_le   = array('f', ArrSize*[0])
+    #b2_time_le   = array('f', ArrSize*[0])
+    b1_amp       = array('f', ArrSize*[0])
+    b2_amp       = array('f', ArrSize*[0])
+    b1_half_int  = array('f', ArrSize*[0])
+    b2_half_int  = array('f', ArrSize*[0])
+    b1_len       = array('f', ArrSize*[0])
+    b2_len       = array('f', ArrSize*[0])
 
 
     rootFile    = TFile(path+'/root/'+ascii_file+'.root',"recreate")
@@ -80,8 +78,8 @@ def convertToROOT(path, ascii_file):
     bunchTree.Branch('b2_bunches', b2_bunches, 'b2_bunches[nB2]/I')
     bunchTree.Branch('b1_time_zc', b1_time_zc, 'b1_time_zc[nB1]/F')
     bunchTree.Branch('b2_time_zc', b2_time_zc, 'b2_time_zc[nB2]/F')
-    bunchTree.Branch('b1_time_le', b1_time_le, 'b1_time_le[nB1]/F')
-    bunchTree.Branch('b2_time_le', b2_time_le, 'b2_time_le[nB2]/F')
+    #bunchTree.Branch('b1_time_le', b1_time_le, 'b1_time_le[nB1]/F')
+    #bunchTree.Branch('b2_time_le', b2_time_le, 'b2_time_le[nB2]/F')
     bunchTree.Branch('b1_amp', b1_amp, 'b1_amp[nB1]/F')
     bunchTree.Branch('b2_amp', b2_amp, 'b2_amp[nB2]/F')
     bunchTree.Branch('b1_half_int', b1_half_int, 'b1_half_int[nB1]/F')
@@ -138,10 +136,7 @@ def convertToROOT(path, ascii_file):
             print i, [row[a] for a in [24,8,27, 10]]
             continue
         """
-
-        # for a in range (0,29):
-        #     print a, row[a]
-            
+        
         #12,13 = foldovwer stuff
 
         # This is the arrays for B1
@@ -151,6 +146,16 @@ def convertToROOT(path, ascii_file):
         half_integ = n.array(re.split(",",row[18]), dtype = n.float)
         length     = n.array(re.split(",",row[20]), dtype = n.float)
         
+        # Debugging the Intensity problems
+        n.set_printoptions(precision=3)
+        if i>2950 and i<2965:
+            #print 'line number ', i, row[1]
+            print 'Int=', half_integ[0:10]*0.960E9
+            #print 'Len=', length[0:3]*1E9
+                # for a in range (0,29):
+                #print a, row[a][:60]
+            
+
         for j in range(nB1[0]):
             try:
                 b1_bunches[j]  = bunchNum[j]
@@ -158,8 +163,8 @@ def convertToROOT(path, ascii_file):
                 print 'Warning: out of range... but will continue'
                 print 'bunchNum', bunchNum
                 
-                #for a in range (0,29):
-                #    print a, row[a][:40]
+                for a in range (0,29):
+                    print a, row[a][:40]
                 return
 
             b1_time_zc[j]  = time_zc[j]
@@ -287,10 +292,15 @@ def testPlots(mytree):
     c1.SaveAs("h_1.png")
     '''
 
+# Add init here
 
-dates_to_add = [["05","01"],]
+dates_to_add = [
+  ["08","24"],
+  ["10","05"],
+  ["10","06"],
+  ]
 
-for month in ['05', '06']:
+for month in ['08']:
     for day in xrange(1,31):
         if day<10: 
             a = "0"+str(day)
@@ -303,4 +313,7 @@ print dates_to_add
 for d in dates_to_add:
     fileName = "bptx_mon_bunches_2015_"+d[0]+"_"+d[1]+"_UTC"
 
-    convertToROOT("./DATA/", fileName)
+    convertToROOT("../DATA/", fileName)
+
+# Do hadd here
+#chain.Add(path+"root/all_bunches.root")
