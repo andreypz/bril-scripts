@@ -48,7 +48,7 @@ def convertToROOT(path, ascii_file):
     stuff = MyStruct()
 
     ArrSize = 3700
-    
+
     nB1          = array('i', [ 0 ] )
     nB2          = array('i', [ 0 ] )
     b1_bunches   = array('i', ArrSize*[0])
@@ -63,6 +63,8 @@ def convertToROOT(path, ascii_file):
     b2_half_int  = array('f', ArrSize*[0])
     b1_len       = array('f', ArrSize*[0])
     b2_len       = array('f', ArrSize*[0])
+    nCol         = array('i', [ 0 ] )
+    deltaT       = array('f', [ 0 ] )
 
 
     rootFile    = TFile(path+'/root/'+ascii_file+'.root',"recreate")
@@ -86,6 +88,8 @@ def convertToROOT(path, ascii_file):
     bunchTree.Branch('b2_half_int', b2_half_int, 'b2_half_int[nB2]/F')
     bunchTree.Branch('b1_len', b1_len, 'b1_len[nB1]/F')
     bunchTree.Branch('b2_len', b2_len, 'b2_len[nB2]/F')
+    bunchTree.Branch('nCol', nCol, 'nCol/I')
+    bunchTree.Branch('deltaT', deltaT, 'deltaT/F')
 
 
     i=0
@@ -119,7 +123,7 @@ def convertToROOT(path, ascii_file):
 
         """
         if row[8]!=row[12]:
-            print "Miss-match in number of bunches for beam 1 !!!\n", 
+            print "Miss-match in number of bunches for beam 1 !!!\n",
             continue
         if row[10]!=row[14]:
             continue
@@ -136,7 +140,7 @@ def convertToROOT(path, ascii_file):
             print i, [row[a] for a in [24,8,27, 10]]
             continue
         """
-        
+
         #12,13 = foldovwer stuff
 
         # This is the arrays for B1
@@ -145,16 +149,16 @@ def convertToROOT(path, ascii_file):
         amp        = n.array(re.split(",",row[16]), dtype = n.float)
         half_integ = n.array(re.split(",",row[18]), dtype = n.float)
         length     = n.array(re.split(",",row[20]), dtype = n.float)
-        
+
         # Debugging the Intensity problems
-        n.set_printoptions(precision=3)
-        if i>2950 and i<2965:
+        # n.set_printoptions(precision=3)
+        # if i>2950 and i<2965:
             #print 'line number ', i, row[1]
-            print 'Int=', half_integ[0:10]*0.960E9
+            # print 'Int=', half_integ[0:10]*0.960E9
             #print 'Len=', length[0:3]*1E9
                 # for a in range (0,29):
                 #print a, row[a][:60]
-            
+
 
         for j in range(nB1[0]):
             try:
@@ -162,7 +166,7 @@ def convertToROOT(path, ascii_file):
             except IndexError:
                 print 'Warning: out of range... but will continue'
                 print 'bunchNum', bunchNum
-                
+
                 for a in range (0,29):
                     print a, row[a][:40]
                 return
@@ -172,21 +176,21 @@ def convertToROOT(path, ascii_file):
             if nB1[0]!=0 and nB2[0]!=0:
                 b1_half_int[j] = half_integ[j]
                 b1_len[j]      = length[j]
-                
+
         # now the same for B2
         bunchNum   = n.array(re.split(",",row[11]), dtype = n.int)
         time_zc    = n.array(re.split(",",row[15]), dtype = n.float)
         amp        = n.array(re.split(",",row[17]), dtype = n.float)
         half_integ = n.array(re.split(",",row[19]), dtype = n.float)
         length     = n.array(re.split(",",row[21]), dtype = n.float)
-        
+
         for j in range(nB2[0]):
             try:
                 b2_bunches[j]  = bunchNum[j]
             except IndexError:
                 print 'Warning: out of range... but will continue'
                 print 'bunchNum', bunchNum
-                return 
+                return
             b2_time_zc[j]  = time_zc[j]
             b2_amp[j]      = amp[j]
             if nB1[0]!=0 and nB2[0]!=0:
@@ -228,11 +232,16 @@ def convertToROOT(path, ascii_file):
             stuff.cog_ddly_c2_c4 = float(row[27])
             stuff.cog_ddly_c1_c2 = float(row[28])
 
+
+        nCol[0]    = int(row[29])
+        deltaT[0]  = float(row[30])
+
+
         bunchTree.Fill()
         i+=1
 
     bunchTree.Write()
-    print bunchTree.GetEntries()
+    print 'Number of entries in this tree =', bunchTree.GetEntries()
 
     rootFile.Close()
 
@@ -295,16 +304,14 @@ def testPlots(mytree):
 # Add init here
 
 dates_to_add = [
-  ["08","24"],
-  ["10","05"],
-  ["10","06"],
+  ["11","02"],
   ]
 
-for month in ['08']:
+for month in ['']:
     for day in xrange(1,31):
-        if day<10: 
+        if day<10:
             a = "0"+str(day)
-        else: 
+        else:
             a = str(day)
         dates_to_add.append([month,a])
 
@@ -313,7 +320,8 @@ print dates_to_add
 for d in dates_to_add:
     fileName = "bptx_mon_bunches_2015_"+d[0]+"_"+d[1]+"_UTC"
 
-    convertToROOT("../DATA/", fileName)
+    DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
+    convertToROOT(DATAPATH, fileName)
 
 # Do hadd here
 #chain.Add(path+"root/all_bunches.root")

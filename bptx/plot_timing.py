@@ -13,8 +13,8 @@ parser.add_option("-s", "--drawSB", dest="drawSB", action="store_true", default=
 
 (options, args) = parser.parse_args()
 if len(args) < 1:
-    parser.print_usage()
-    exit(1)
+  parser.print_usage()
+  exit(1)
 
 drawSB = options.drawSB
 

@@ -10,31 +10,47 @@ class LHCFills():
 
         #Times in the dict below are approximate, to make the plots look better
         self._fillTimeDict = {
-            #0 begin plot time
-            #1 stable beams
-            #2 end stable
+            # 0 - begin plot time
+            # 1 - stable beams
+            # 2 - end stable
 
-            #Note: not all the Fills are in this list!
+            # Note: not all the Fills are in this list!
+
+        '4565':
+        [
+        TDatime(2015,11,2,7,30,00), 
+        TDatime(2015,11,2,8,40,00), 
+        TDatime(2015,11,2,12,00,00)
+        ],
 
         '4463':
         [
-            TDatime(2015,10,5,19,00,00), 
-            TDatime(2015,10,5,20,13,00), 
-            TDatime(2015,10,6,00,20,00)
+        TDatime(2015,10,5,19,00,00), 
+        TDatime(2015,10,5,20,13,00), 
+        TDatime(2015,10,6,00,20,00)
         ],
+
+
+        '4381':
+        [
+        TDatime(2015,9,16,13,00,00), 
+        TDatime(2015,9,17, 1,45,00), 
+        TDatime(2015,9,17,13,15,00)
+        ],
+
 
         '4269':
         [
-            TDatime(2015,8,25,12,00,00), 
-            TDatime(2015,8,25,14,30,00), 
-            TDatime(2015,8,26,03,36,00)
+        TDatime(2015,8,25,12,00,00), 
+        TDatime(2015,8,25,14,30,00), 
+        TDatime(2015,8,26,03,36,00)
         ],
 
         '4266':
         [
-            TDatime(2015,8,24,20,00,00), 
-            TDatime(2015,8,24,21,06,00), 
-            TDatime(2015,8,25,05,57,00)
+        TDatime(2015,8,24,20,00,00), 
+        TDatime(2015,8,24,21,06,00), 
+        TDatime(2015,8,25,05,57,00)
         ],
 
         '3858':
