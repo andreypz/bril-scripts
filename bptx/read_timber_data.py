@@ -48,11 +48,14 @@ def readFBCT(file_fbct, fill):
   
 
 
-def readATLASint(fill, datatype='B1_INT_MEAN'):
+def readTIMBER_TOT_INT(fill, source="ATLAS", datatype='B1_INT_MEAN', ):
   # datatype = B1 or2 _INT_ MEAN or SUM
+  # source = ATLAS, BCTDC.A6R4, BCTFR.A6R4
 
-  file_data = "../DATA/TIMBER-FILL-"+str(fill)+"/TIMBER_ATLAS_"+datatype+".csv"
+  file_data = "../DATA/TIMBER-FILL-"+str(fill)+"/TIMBER_"+source+"."+datatype+".csv"
   
+  print " ... reading TIMBER data file", file_data 
+
   c = f.LHCFills(fill)
   beginTime  = c.Begin()
 
@@ -64,11 +67,13 @@ def readATLASint(fill, datatype='B1_INT_MEAN'):
     i+=1
     if i<=3: continue
     myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
-    dt = TDatime(int(myDateTime.year), int(myDateTime.month), int(myDateTime.day), int(myDateTime.hour), int(myDateTime.minute), int(myDateTime.second))
+    dt = TDatime(int(myDateTime.year), int(myDateTime.month), int(myDateTime.day),
+                 int(myDateTime.hour), int(myDateTime.minute), int(myDateTime.second))
     daTime = dt.Convert()
     ddd = float(dt.Convert()-beginTime.Convert())
     # print i, row[0], row[1]
-    
+
+    #if source==''
     gr.SetPoint(i-4,ddd, 1E-11*float(row[1]))
 
   return gr
