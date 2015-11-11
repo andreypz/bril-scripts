@@ -56,8 +56,8 @@ chain.Add(path+"root/bptx_mon_bunches_2015_11_02_UTC.root")
 ItoIfactor1 = '0.960';
 ItoIfactor2 = '0.960';
 # Area to intensity scale factor
-AtoIfactor1 = '0.880';
-AtoIfactor2 = '0.930';
+AtoIfactor1 = '0.4951';
+AtoIfactor2 = '0.5034';
 
 
 print 'Chain N entries = ', chain.GetEntries()
@@ -94,6 +94,7 @@ duration = endTime.Convert() - beginTime.Convert()
 bunches = {'1': bptx1_wrt_orbit1  - 0.003,
            '39': 0,
            '79': 0,
+           '80': 0,
            #'222': 0,
            #'333': 0,
            #'999': 0,
@@ -152,6 +153,16 @@ print '\n\n AND  = ', bx_AND
 print 'XORS = ', b1_XOR, b2_XOR
 print "\n N_B1 = ",len(b1_bunches), "N_B2 = ", len(b2_bunches)
 print "N_AND = ",len(bx_AND), "N_OR = ", len(bx_OR)
+
+
+def getPositionInArray(myarray, BX=1):
+  posb = [i for i,x in enumerate(myarray) if x == BX]
+  try:
+    b = str(posb[0])
+  except IndexError:
+    b=None
+    
+  return b
 
 
 def makeHists(var, names, shift, lim, bunch):
@@ -229,31 +240,37 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
   gr1.SetTitle('Fill '+str(fill) +', BX = '+BX +';UTC time;'+title)
 
   if EXT1:
-    ext1 = tim.readTIMBER_TOT_INT(fill, EXT1[0], EXT1[1])
+    if BX=='TOT':
+      ext1 = tim.readTIMBER_TOT_INT(fill, EXT1[0], EXT1[1])
+    else:
+      ext1 = tim.readTIMBER_BX_INT(fill, BX, EXT1[0], EXT1[1])
     ext1.Draw('same')
     ext1.SetLineColor(kGray)
     ext1.SetLineWidth(2)
 
   if EXT2:
-    ext2 = tim.readTIMBER_TOT_INT(fill, EXT2[0], EXT2[1])
+    if BX=='TOT':
+      ext2 = tim.readTIMBER_TOT_INT(fill, EXT2[0], EXT2[1])
+    else:
+      ext2 = tim.readTIMBER_BX_INT(fill, BX, EXT2[0], EXT2[1])
     ext2.Draw('same')
     ext2.SetLineColor(kGray+2)
     ext2.SetLineWidth(2)
 
   if EXT1 and EXT2:
-    leg = TLegend(0.70,0.70,0.89,0.85)
+    leg = TLegend(0.70,0.70,0.90,0.90)
     leg.AddEntry(gr1,"CMS B1", "f")
     leg.AddEntry(gr2,"CMS B2", "f")
     if EXT1[0]=='ATLAS':
       leg.AddEntry(ext1,"ATLAS B1", "l")
-      leg.AddEntry(ext3,"ATLAS B3", "l")
+      leg.AddEntry(ext2,"ATLAS B2", "l")
     elif EXT1[0]=='BCTDC.A6R4':
       leg.AddEntry(ext1,"BCTDC.A6R4 B1", "l")
       leg.AddEntry(ext2,"BCTDC.A6R4 B2", "l")
     elif EXT1[0]=='BCTFR.A6R4':
       leg.AddEntry(ext1,"BCTFR.A6R4 B1", "l")
       leg.AddEntry(ext2,"BCTFR.A6R4 B2", "l")
-          
+
   else:
     leg = TLegend(0.70,0.70,0.85,0.80)
     leg.AddEntry(gr1,"Beam 1", "f")
@@ -276,13 +293,15 @@ drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='S
 #formula1 = '1E9*Sum$(b1_int)'
 #formula2 = '1E9*Sum$(b2_int)'
 # If the integral is bad, can use simple area:
-formula1 = '1E9*Sum$(b1_amp*b1_len)'
-formula2 = '1E9*Sum$(b2_amp*b2_len)'
-drawVStime(formula1, formula2, 'TOT', [000,3000], name="totalCharge", title='Total beam charge, #times 10^{11}',
+formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)'
+formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)'
+#drawVStime(formula1, formula2, 'TOT', [800,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
+#           EXT1=['BCTFR.A6R4','B1_TOTINT'], EXT2=['BCTFR.A6R4','B2_TOTINT'])
+drawVStime(formula1, formula2, 'TOT', [850,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
            EXT1=['BCTDC.A6R4','B1_TOTINT'], EXT2=['BCTDC.A6R4','B2_TOTINT'])
 
-formula1 = '1E9*Sum$(b1_amp*b1_len)/Length$(b1_amp)'
-formula2 = '1E9*Sum$(b2_amp*b2_len)/Length$(b2_amp)'
+formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)/Length$(b1_amp)'
+formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)/Length$(b2_amp)'
 drawVStime(formula1, formula2, 'AVG', [0,3], name="averageCharge", title='Average bunch charge, #times 10^{11}')
 
 
@@ -290,17 +309,14 @@ for bb, sh in bunches.iteritems():
 
     print 'bb and sh =', bb, sh
 
-    posb1 = [i for i,x in enumerate(b1_bunches) if x == int(bb)]
-    posb2 = [i for i,x in enumerate(b2_bunches) if x == int(bb)]
+    b1 = getPositionInArray(b1_bunches, int(bb))
+    b2 = getPositionInArray(b2_bunches, int(bb))
 
-    print 'Position of the BX=%s in the arrays, B1 and B2 ' % bb, posb1, posb2
-    try:
-      b1 = str(posb1[0])
-      b2 = str(posb2[0])
-    except IndexError:
-      print 'Sorry, no bunches found for:', bb, sh
+    print 'Position of the BX=%s in the arrays, B1 and B2 ' % bb, b1,b2
+
+    if b1==None or b2==None:
+      print 'Sorry, no bunches are found for BX=',bb
       continue
-
 
     # formula1 = ItoIfactor1+'*0.5*1e9*(b1_int['+b1+'])'
     # formula2 = ItoIfactor2+'*0.5*1e9*(b2_int['+b2+'])'
@@ -308,7 +324,11 @@ for bb, sh in bunches.iteritems():
 
     formula1 = AtoIfactor1+'*1e9*(b1_amp['+b1+']*b1_len['+b1+'])'
     formula2 = AtoIfactor2+'*1e9*(b2_amp['+b2+']*b2_len['+b2+'])'
-    drawVStime(formula1, formula2, bb, [0,3], name="bunchIntensity", title='Charge, protons #times 10^{11}')
+    #drawVStime(formula1, formula2, bb, [0,3], name="bunchIntensity", title='Charge, protons #times 10^{11}')
+
+    drawVStime(formula1, formula2, bb, [0.5,1.5], name="bunchIntensity", title='Charge, protons #times 10^{11}',
+               EXT1=['BCTFR.A6R4','B1_INT'], EXT2=['BCTFR.A6R4','B2_INT'])
+
 
     formula1 = '1e9*(b1_len['+b1+'])'
     formula2 = '1e9*(b2_len['+b2+'])'
@@ -319,7 +339,8 @@ for bb, sh in bunches.iteritems():
     drawVStime(formula1, formula2, bb, [1,3], name="bunchAmplitude", title='Pulse amplitude, V')
 
 
-        # This one is special, let's leave it as is for right now
+
+    # This one is special, let's leave it as is for right now
     dTcalib = '2.65'
     chain.Draw('1e9*(b1_time_zc['+b1+']-b2_time_zc['+b2+']) - '+
                dTcalib+':daTime-'+begin, 'daTime>'+ stable + '&& daTime<'+end)
