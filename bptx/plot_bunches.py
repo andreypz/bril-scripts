@@ -15,10 +15,11 @@ if len(sys.argv) < 2:
 
 
 if fillNumber == "0":
-  #c = f.LHCFills(0, TDatime(2015,7,14,4,10,00), None, TDatime(2015,7,14,11,10,00))
-  #TimeFormat ="%H:%M"
-  c = f.LHCFills(0, TDatime(2015,6,10,1,00,00), None, TDatime(2015,10,14,1,00,00))
-  TimeFormat ="%d %b"
+  c = f.LHCFills(0, TDatime(2015,9,17,2,10,00), None, TDatime(2015,9,17,2,15,00))
+  TimeFormat ="%H:%M"
+  # For the whole history plots
+  # c = f.LHCFills(0, TDatime(2015,6,10,1,00,00), None, TDatime(2015,10,14,1,00,00))
+  # TimeFormat ="%d %b"
 else:
   c = f.LHCFills(fillNumber)
   TimeFormat ="%H:%M"
@@ -34,23 +35,24 @@ def createDir(myDir):
   else:
     print myDir, 'already exists'
 
-
 print 'Fill = ', c.Fill()
 # print c.Title()
 c.Begin().Print()
 print 'Fill begin Day= ', c.Begin().GetDay()
 fill = c.Fill()
-plotTitle = ';'
 
 beginTime  = c.Begin()
-stableTime = c.Stable()
+if (c.Stable()!=None): stableTime = c.Stable()
+else:  stableTime = c.Begin()
+
 endTime    = c.End()
-plotTitle = c.Title()
 
 path = "../../BPTXMONDATA/"
 chain = TChain("bunchTree");
-chain.Add(path+"root/all_bunches.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_11_02_UTC.root")
+#chain.Add(path+"root/all_bunches.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_09_16_UTC.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -62,21 +64,13 @@ AtoIfactor2 = '0.5034';
 
 print 'Chain N entries = ', chain.GetEntries()
 
-#nMaxBunches = 1000
 b1_bunches = []
 b2_bunches = []
-#b1_bunches  = array('i', nMaxBunches*[0])
-#b2_bunches  = array('i', nMaxBunches*[0])
-#chain.SetBranchAddress("b1_bunches",b1_bunches)
-#chain.SetBranchAddress("b2_bunches",b2_bunches)
 
-
-
-orbit2_wrt_orbit1 = 32.4142744
-bptx1_wrt_orbit1  = 6.621972
-bptx2_wrt_orbit2  = -25.79339
-bptx2_wrt_orbit1  = bptx2_wrt_orbit2+orbit2_wrt_orbit1
-#print beginTime, str(beginTime.Convert())
+#orbit2_wrt_orbit1 = 32.4142744
+#bptx1_wrt_orbit1  = 6.621972
+#bptx2_wrt_orbit2  = -25.79339
+#bptx2_wrt_orbit1  = bptx2_wrt_orbit2+orbit2_wrt_orbit1
 
 gROOT.ProcessLine(".L ~/tdrstyle.C")
 #gROOT.ProcessLine(".L /home/andreypz/Dropbox/tdrstyle.C")
@@ -90,8 +84,8 @@ stable = str(stableTime.Convert())
 end    = str(endTime.Convert())
 duration = endTime.Convert() - beginTime.Convert()
 
-
-bunches = {'1': bptx1_wrt_orbit1  - 0.003,
+# BX: time offset from Orbit
+bunches = {'1':  0,
            '39': 0,
            '79': 0,
            '80': 0,
@@ -101,9 +95,6 @@ bunches = {'1': bptx1_wrt_orbit1  - 0.003,
            #'1111': 0,
            #'': 0,
            #'': 0,
-           #'51': bptx1_wrt_orbit1  + 0.2  -0.004
-           #'5': bptx1_wrt_orbit1  + 0.2*2-0.005,
-           #'4': bptx1_wrt_orbit1  + 0.2*9-0.007
            }
 
 b1_int = []
@@ -161,7 +152,7 @@ def getPositionInArray(myarray, BX=1):
     b = str(posb[0])
   except IndexError:
     b=None
-    
+
   return b
 
 
@@ -213,6 +204,8 @@ def makeHists(var, names, shift, lim, bunch):
 
 def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
                title = 'Intensity, protons #times 10^{11}', EXT1=None, EXT2=None, ):
+
+  # This obe draws everything vs Time!
 
   chain.Draw(formula1+':daTime-'+begin, 'daTime>'+ stable + '&& daTime<'+end)
   gr1 = TGraph(gPad.GetPrimitive("Graph"))
@@ -285,27 +278,58 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
 
 
 
-formula1 = 'Sum$(b1_amp)'
-formula2 = 'Sum$(b2_amp)'
-drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='Sum of amplitudes')
+def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
+  print '\t ** Making the .csv file with per-bunch intensity data:', fname
+  for e in btree:
+    # print e.daTime, begin.Con, end_t
 
-# If the integral data is good:
-#formula1 = '1E9*Sum$(b1_int)'
-#formula2 = '1E9*Sum$(b2_int)'
-# If the integral is bad, can use simple area:
-formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)'
-formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)'
-#drawVStime(formula1, formula2, 'TOT', [800,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
-#           EXT1=['BCTFR.A6R4','B1_TOTINT'], EXT2=['BCTFR.A6R4','B2_TOTINT'])
-drawVStime(formula1, formula2, 'TOT', [850,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
-           EXT1=['BCTDC.A6R4','B1_TOTINT'], EXT2=['BCTDC.A6R4','B2_TOTINT'])
+    if e.daTime < begin_t.Convert(): continue
+    if e.daTime > end_t.Convert(): continue
 
-formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)/Length$(b1_amp)'
-formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)/Length$(b2_amp)'
-drawVStime(formula1, formula2, 'AVG', [0,3], name="averageCharge", title='Average bunch charge, #times 10^{11}')
+    # print e.daTime, len(b1_bunches)
+    charge_array=[]
+    for b in xrange(3464):
+      if Beam=='B1':
+        if b in b1_bunches:
+          b_pos = int(getPositionInArray(b1_bunches, b))
+          isit = e.b1_bunches[b_pos]
+          # print b, b_pos,isit
+          charge_array.append(int(float(AtoIfactor1)*1E13*e.b1_amp[b_pos]*e.b1_len[b_pos]))
+          #charge_array.append(1234)
+        else:
+          # TODO: Instead declare arrays od zeros
+          charge_array.append(0)
+          
+    print e.daTime, charge_array
+    
+  print '\t ** Finished with the file-making'
 
 
-for bb, sh in bunches.iteritems():
+if __name__ == "__main__":
+
+  formula1 = 'Sum$(b1_amp)'
+  formula2 = 'Sum$(b2_amp)'
+  drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='Sum of amplitudes')
+
+  makeCSVfile('test.csv',chain, beginTime, endTime, 'B1')
+
+  # If the integral data is good:
+  #formula1 = '1E9*Sum$(b1_int)'
+  #formula2 = '1E9*Sum$(b2_int)'
+  # If the integral is bad, can use simple area:
+  formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)'
+  formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)'
+  #drawVStime(formula1, formula2, 'TOT', [800,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
+  #           EXT1=['BCTFR.A6R4','B1_TOTINT'], EXT2=['BCTFR.A6R4','B2_TOTINT'])
+  drawVStime(formula1, formula2, 'TOT', [850,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
+             EXT1=['BCTDC.A6R4','B1_TOTINT'], EXT2=['BCTDC.A6R4','B2_TOTINT'])
+
+  formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)/Length$(b1_amp)'
+  formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)/Length$(b2_amp)'
+  drawVStime(formula1, formula2, 'AVG', [0,3], name="averageCharge", title='Average bunch charge, #times 10^{11}')
+
+
+  for bb, sh in bunches.iteritems():
 
     print 'bb and sh =', bb, sh
 
