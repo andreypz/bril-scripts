@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-import sys,os
+import sys,os,datetime
 from  ROOT import *
 import fill_class as f
 import read_timber_data as tim
@@ -38,7 +38,7 @@ def createDir(myDir):
 print 'Fill = ', c.Fill()
 # print c.Title()
 c.Begin().Print()
-print 'Fill begin Day= ', c.Begin().GetDay()
+# print 'Fill begin Day= ', c.Begin().GetDay()
 fill = c.Fill()
 
 beginTime  = c.Begin()
@@ -89,6 +89,8 @@ bunches = {'1':  0,
            '39': 0,
            '79': 0,
            '80': 0,
+           '81': 0,
+           '82': 0,
            #'222': 0,
            #'333': 0,
            #'999': 0,
@@ -263,6 +265,9 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
     elif EXT1[0]=='BCTFR.A6R4':
       leg.AddEntry(ext1,"BCTFR.A6R4 B1", "l")
       leg.AddEntry(ext2,"BCTFR.A6R4 B2", "l")
+    elif EXT1[0]=='CMS.BPTX':
+      leg.AddEntry(ext1,"CMS.BPTX B1", "l")
+      leg.AddEntry(ext2,"CMS.BPTX B2", "l")
 
   else:
     leg = TLegend(0.70,0.70,0.85,0.80)
@@ -280,28 +285,64 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
 
 def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
   print '\t ** Making the .csv file with per-bunch intensity data:', fname
+
+  csv_file = open(fname, "w")  
+  csv_file.write("# Bunch charges from CMS BPTX for Beam=%s \n"%Beam)
+  csv_file.write("# Format: Time,array of ints\n")
+  
+
   for e in btree:
     # print e.daTime, begin.Con, end_t
 
     if e.daTime < begin_t.Convert(): continue
     if e.daTime > end_t.Convert(): continue
 
-    # print e.daTime, len(b1_bunches)
-    charge_array=[]
-    for b in xrange(3464):
-      if Beam=='B1':
-        if b in b1_bunches:
-          b_pos = int(getPositionInArray(b1_bunches, b))
-          isit = e.b1_bunches[b_pos]
-          # print b, b_pos,isit
-          charge_array.append(int(float(AtoIfactor1)*1E13*e.b1_amp[b_pos]*e.b1_len[b_pos]))
-          #charge_array.append(1234)
-        else:
-          # TODO: Instead declare arrays od zeros
-          charge_array.append(0)
-          
-    print e.daTime, charge_array
     
+    if Beam=='B1':
+      tree_bunches = e.b1_bunches
+      array_bunches = b1_bunches
+      tree_amp = e.b1_amp
+      tree_len = e.b1_len
+      AtoIfactor = AtoIfactor1
+
+    elif Beam=='B2':
+      tree_bunches = e.b2_bunches
+      array_bunches = b2_bunches
+      tree_amp = e.b2_amp
+      tree_len = e.b2_len
+      AtoIfactor = AtoIfactor2
+    else:
+      print "Nope, This beam type is not supported:", Beam
+      sys.exit()
+
+    if len(tree_bunches)!=len(array_bunches):
+      print '\t ** WARNING: Number of bunches dont agree', len(tree_bunches), len(array_bunches)
+      continue 
+    # print e.daTime, len(b1_bunches)
+    charge_array=[0]*3564
+
+    for b in tree_bunches:
+      # print 'bunch in a tree =', b
+      b_pos = int(getPositionInArray(array_bunches, b))
+      # print 'Posiotion in array =', b_pos
+      try: 
+        isit = tree_bunches[b_pos]
+      except IndexError:
+        print len(tree_bunches)
+        print '\t ** IndexError catch: Wrong bunch position:', b, b_pos
+        continue 
+      if isit!=int(b):
+        print '\t ** WARNING: Wrong bunch position:', b, isit
+      # print b, b_pos,isit
+      charge_array[int(b)-1] = (int(float(AtoIfactor)*1E20*tree_amp[b_pos]*tree_len[b_pos]))
+          
+    if len(charge_array):
+      line = ','.join([datetime.datetime.fromtimestamp(e.daTime).strftime('%Y-%m-%d %H:%M:%S.000')]+
+                       [str(ch) for ch in charge_array])
+      csv_file.write(line+'\n')
+
+  csv_file.close()
+  
   print '\t ** Finished with the file-making'
 
 
@@ -311,7 +352,8 @@ if __name__ == "__main__":
   formula2 = 'Sum$(b2_amp)'
   drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='Sum of amplitudes')
 
-  makeCSVfile('test.csv',chain, beginTime, endTime, 'B1')
+  #makeCSVfile('test-B1.csv',chain, beginTime, endTime, 'B1')
+  #makeCSVfile('test-B2.csv',chain, beginTime, endTime, 'B2')
 
   # If the integral data is good:
   #formula1 = '1E9*Sum$(b1_int)'
@@ -349,6 +391,9 @@ if __name__ == "__main__":
     formula1 = AtoIfactor1+'*1e9*(b1_amp['+b1+']*b1_len['+b1+'])'
     formula2 = AtoIfactor2+'*1e9*(b2_amp['+b2+']*b2_len['+b2+'])'
     #drawVStime(formula1, formula2, bb, [0,3], name="bunchIntensity", title='Charge, protons #times 10^{11}')
+
+    #drawVStime(formula1, formula2, bb, [0.7,1.4], name="bunchIntensity", title='Charge, protons #times 10^{11}',
+    #           EXT1=['CMS.BPTX','B1_INT'], EXT2=['CMS.BPTX','B2_INT'])
 
     drawVStime(formula1, formula2, bb, [0.5,1.5], name="bunchIntensity", title='Charge, protons #times 10^{11}',
                EXT1=['BCTFR.A6R4','B1_INT'], EXT2=['BCTFR.A6R4','B2_INT'])

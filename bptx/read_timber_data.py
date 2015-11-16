@@ -16,8 +16,6 @@ def createDir(myDir):
       else:
         print myDir, 'already exists'
 
-
-
 def readFBCT(file_fbct, fill):
   c = f.LHCFills(fill)
 
@@ -50,7 +48,6 @@ def readFBCT(file_fbct, fill):
 def readTIMBER_TOT_INT(fill, source="ATLAS", datatype='B1_INT_MEAN', ):
   # source = ATLAS, BCTDC.A6R4, BCTFR.A6R4
   # datatype = B1 or2 _INT_ MEAN or SUM (this is hardcoded in the names of the .csv files)
-
   file_data = "../DATA/TIMBER-FILL-"+str(fill)+"/TIMBER_"+source+"."+datatype+".csv"
 
   print " ... reading TIMBER data file", file_data
@@ -59,7 +56,10 @@ def readTIMBER_TOT_INT(fill, source="ATLAS", datatype='B1_INT_MEAN', ):
   beginTime  = c.Begin()
 
   gr = TGraph()
-  reader = csv.reader(open(file_data, 'rb'))
+  try:
+    reader = csv.reader(open(file_data, 'rb'))
+  except IOError:
+    return gr
 
   skiplines = 10
   i=0
@@ -85,7 +85,7 @@ def readTIMBER_TOT_INT(fill, source="ATLAS", datatype='B1_INT_MEAN', ):
 
 def readTIMBER_BX_INT(fill, BX='1', source="ATLAS", datatype='B1_INT_MEAN', ):
   # source and datatype: see comment for readTIMBER_TOT_INT()
-
+  if fill==0: fill=4381
   file_data = "../DATA/TIMBER-FILL-"+str(fill)+"/TIMBER_"+source+"."+datatype+".csv"
 
   print " ... reading TIMBER data file", file_data
@@ -94,16 +94,20 @@ def readTIMBER_BX_INT(fill, BX='1', source="ATLAS", datatype='B1_INT_MEAN', ):
   beginTime  = c.Begin()
 
   gr = TGraph()
-  reader = csv.reader(open(file_data, 'rb'))
+  try:
+    reader = csv.reader(open(file_data, 'rb'))
+  except IOError:
+    return gr
 
   skiplines = 10
   i=0
   for row in reader:
     i+=1
     if i<=skiplines: continue
+    # if i<20: print len(row)
 
     myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
-    dt = TDatime(int(myDateTime.year), int(myDateTime.month), int(myDateTime.day),
+    dt = TDatime(int(myDateTime.year), int(myDateTime.month),  int(myDateTime.day),
                  int(myDateTime.hour), int(myDateTime.minute), int(myDateTime.second))
     daTime = dt.Convert()
     ddd = float(dt.Convert()-beginTime.Convert())
@@ -152,6 +156,7 @@ if __name__ == "__main__":
   atl.GetXaxis().SetLabelOffset(0.02);
   atl.GetXaxis().SetRangeUser(0, duration)
   atl.Draw("AP*")
+
   c1.SaveAs("./timber-plots/fill_"+str(myFILL)+"/ATL-INT-MEAN_fill_"+str(myFILL)+".png")
 
 
