@@ -53,6 +53,8 @@ chain = TChain("bunchTree");
 chain.Add(path+"root/bptx_mon_bunches_2015_09_16_UTC.root")
 chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
 chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_08_24_UTC.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_08_26_UTC.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -85,7 +87,8 @@ end    = str(endTime.Convert())
 duration = endTime.Convert() - beginTime.Convert()
 
 # BX: time offset from Orbit
-bunches = {'1':  0,
+bunches = {'1':0, '51':0, '91':0}
+''' bunches = {'1':  0,
            '39': 0,
            '79': 0,
            '80': 0,
@@ -98,7 +101,7 @@ bunches = {'1':  0,
            #'': 0,
            #'': 0,
            }
-
+'''
 b1_int = []
 b2_int = []
 
@@ -352,8 +355,8 @@ if __name__ == "__main__":
   formula2 = 'Sum$(b2_amp)'
   drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='Sum of amplitudes')
 
-  #makeCSVfile('test-B1.csv',chain, beginTime, endTime, 'B1')
-  #makeCSVfile('test-B2.csv',chain, beginTime, endTime, 'B2')
+  makeCSVfile('test-B1.csv',chain, beginTime, endTime, 'B1')
+  makeCSVfile('test-B2.csv',chain, beginTime, endTime, 'B2')
 
   # If the integral data is good:
   #formula1 = '1E9*Sum$(b1_int)'
@@ -392,11 +395,11 @@ if __name__ == "__main__":
     formula2 = AtoIfactor2+'*1e9*(b2_amp['+b2+']*b2_len['+b2+'])'
     #drawVStime(formula1, formula2, bb, [0,3], name="bunchIntensity", title='Charge, protons #times 10^{11}')
 
-    #drawVStime(formula1, formula2, bb, [0.7,1.4], name="bunchIntensity", title='Charge, protons #times 10^{11}',
-    #           EXT1=['CMS.BPTX','B1_INT'], EXT2=['CMS.BPTX','B2_INT'])
+    drawVStime(formula1, formula2, bb, [0.7,1.4], name="bunchIntensity", title='Charge, protons #times 10^{11}',
+               EXT1=['CMS.BPTX','B1_INT'], EXT2=['CMS.BPTX','B2_INT'])
 
-    drawVStime(formula1, formula2, bb, [0.5,1.5], name="bunchIntensity", title='Charge, protons #times 10^{11}',
-               EXT1=['BCTFR.A6R4','B1_INT'], EXT2=['BCTFR.A6R4','B2_INT'])
+    #drawVStime(formula1, formula2, bb, [0.5,1.5], name="bunchIntensity", title='Charge, protons #times 10^{11}',
+    #           EXT1=['BCTFR.A6R4','B1_INT'], EXT2=['BCTFR.A6R4','B2_INT'])
 
 
     formula1 = '1e9*(b1_len['+b1+'])'
