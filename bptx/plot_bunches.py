@@ -79,7 +79,7 @@ if fill in ['4634']:
   limitAvgInt = [0.4, 1.0]
 elif fill in ['4266']:
   limitTotInt = [37, 41]
-  limitAvgInt = [0.8, 1.0]
+  limitAvgInt = [0.6, 1.2]
 elif fill in ['4381','4384']:
   limitTotInt = [800, 1100]
   limitAvgInt = [0.7, 1.2]
