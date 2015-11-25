@@ -4,7 +4,7 @@
 ## bptx
 These are the scripts to analyze the datta from scope monitoring.
 
-There are two steps in analyzing this data. The files called ```makeTree_bunches.py`` and ```makeTree_timing.py```
+There are two steps in analyzing this data. The files called ```makeTree_bunches.pyy``` and ```makeTree_timing.py```
 take the original .txt files as inputs and produce the .root files with TTree objects inside.
 
 The scripts stariting with ```plot_``` run over theose root trees and make the plts.

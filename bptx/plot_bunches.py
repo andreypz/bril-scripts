@@ -8,12 +8,20 @@ import read_timber_data as tim
 gROOT.SetBatch()
 from array import *
 
-fillNumber = sys.argv[1]
-if len(sys.argv) < 2:
+from optparse import OptionParser
+parser = OptionParser(usage="usage: %prog [options ] fillNumber")
+parser.add_option("--atl", dest="atl", action="store_true", default=False,
+                  help="Draw ATLAS BPTX data from TIMBER")
+parser.add_option("--cms", dest="cms", action="store_true", default=False,
+                  help="Draw CMS data instead of FBCT (sanity check)")
+
+(opt, args) = parser.parse_args()
+if len(args) < 1:
   print '\t ERROR. Provide the Fill number, like: plot_bunches.py 1234'
-  sys.exit(1)
+  parser.print_usage()
+  exit(1)
 
-
+fillNumber = sys.argv[1]
 if fillNumber == "0":
   c = f.LHCFills(0, TDatime(2015,9,17,2,10,00), None, TDatime(2015,9,17,2,15,00))
   TimeFormat ="%H:%M"
@@ -55,6 +63,7 @@ chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
 chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
 chain.Add(path+"root/bptx_mon_bunches_2015_08_24_UTC.root")
 chain.Add(path+"root/bptx_mon_bunches_2015_08_26_UTC.root")
+chain.Add(path+"root/bptx_mon_bunches_2015_11_21_UTC.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -63,6 +72,17 @@ ItoIfactor2 = '0.960';
 AtoIfactor1 = '0.4951';
 AtoIfactor2 = '0.5034';
 
+limitAmpSum = [0, 3000]
+limitLen = [0.2,1.5]
+if fill in ['4634']:
+  limitTotInt = [20, 40]
+  limitAvgInt = [0.4, 1.0]
+elif fill in ['4266']:
+  limitTotInt = [37, 41]
+  limitAvgInt = [0.8, 1.0]
+elif fill in ['4381','4384']:
+  limitTotInt = [800, 1100]
+  limitAvgInt = [0.7, 1.2]
 
 print 'Chain N entries = ', chain.GetEntries()
 
@@ -105,8 +125,9 @@ bunches = {'1':0, '51':0, '91':0}
 b1_int = []
 b2_int = []
 
-outDir = './bunches/fill_'+str(fill)
+outDir = './bunches/fill_'+fill
 createDir(outDir)
+createDir(outDir+'/PerBX')
 
 
 
@@ -238,7 +259,7 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
   gr1.SetTitle('Fill '+str(fill) +', BX = '+BX +';UTC time;'+title)
 
   if EXT1:
-    if BX=='TOT':
+    if BX in ['TOT','AVG']:
       ext1 = tim.readTIMBER_TOT_INT(fill, EXT1[0], EXT1[1])
     else:
       ext1 = tim.readTIMBER_BX_INT(fill, BX, EXT1[0], EXT1[1])
@@ -247,7 +268,7 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
     ext1.SetLineWidth(2)
 
   if EXT2:
-    if BX=='TOT':
+    if BX in ['TOT','AVG']:
       ext2 = tim.readTIMBER_TOT_INT(fill, EXT2[0], EXT2[1])
     else:
       ext2 = tim.readTIMBER_BX_INT(fill, BX, EXT2[0], EXT2[1])
@@ -255,6 +276,7 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
     ext2.SetLineColor(kGray+2)
     ext2.SetLineWidth(2)
 
+  tag = ''
   if EXT1 and EXT2:
     leg = TLegend(0.70,0.70,0.90,0.90)
     leg.AddEntry(gr1,"CMS B1", "f")
@@ -262,15 +284,19 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
     if EXT1[0]=='ATLAS':
       leg.AddEntry(ext1,"ATLAS B1", "l")
       leg.AddEntry(ext2,"ATLAS B2", "l")
+      tag = 'ATL'
     elif EXT1[0]=='BCTDC.A6R4':
       leg.AddEntry(ext1,"BCTDC.A6R4 B1", "l")
       leg.AddEntry(ext2,"BCTDC.A6R4 B2", "l")
+      tag = 'DC'
     elif EXT1[0]=='BCTFR.A6R4':
       leg.AddEntry(ext1,"BCTFR.A6R4 B1", "l")
       leg.AddEntry(ext2,"BCTFR.A6R4 B2", "l")
+      tag = 'FR'
     elif EXT1[0]=='CMS.BPTX':
       leg.AddEntry(ext1,"CMS.BPTX B1", "l")
       leg.AddEntry(ext2,"CMS.BPTX B2", "l")
+      tag = 'CMS'
 
   else:
     leg = TLegend(0.70,0.70,0.85,0.80)
@@ -280,7 +306,10 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
   leg.SetFillColor(kWhite)
   leg.Draw()
 
-  c1.SaveAs(outDir+"/"+'_'.join(['fill',str(fill),name,'BX',BX,'bptxmon.png']))
+  if BX in ['TOT','AVG']: perBX = ''
+  else: perBX = 'PerBX/'
+
+  c1.SaveAs(outDir+"/"+perBX+'_'.join(['fill',str(fill),name,'BX',BX,tag,'bptxmon.png']))
   del(gr1)
   del(gr2)
 
@@ -289,10 +318,10 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
 def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
   print '\t ** Making the .csv file with per-bunch intensity data:', fname
 
-  csv_file = open(fname, "w")  
+  csv_file = open(fname, "w")
   csv_file.write("# Bunch charges from CMS BPTX for Beam=%s \n"%Beam)
   csv_file.write("# Format: Time,array of ints\n")
-  
+
 
   for e in btree:
     # print e.daTime, begin.Con, end_t
@@ -300,7 +329,7 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
     if e.daTime < begin_t.Convert(): continue
     if e.daTime > end_t.Convert(): continue
 
-    
+
     if Beam=='B1':
       tree_bunches = e.b1_bunches
       array_bunches = b1_bunches
@@ -320,7 +349,7 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
 
     if len(tree_bunches)!=len(array_bunches):
       print '\t ** WARNING: Number of bunches dont agree', len(tree_bunches), len(array_bunches)
-      continue 
+      continue
     # print e.daTime, len(b1_bunches)
     charge_array=[0]*3564
 
@@ -328,24 +357,24 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
       # print 'bunch in a tree =', b
       b_pos = int(getPositionInArray(array_bunches, b))
       # print 'Posiotion in array =', b_pos
-      try: 
+      try:
         isit = tree_bunches[b_pos]
       except IndexError:
         print len(tree_bunches)
         print '\t ** IndexError catch: Wrong bunch position:', b, b_pos
-        continue 
+        continue
       if isit!=int(b):
         print '\t ** WARNING: Wrong bunch position:', b, isit
       # print b, b_pos,isit
       charge_array[int(b)-1] = (int(float(AtoIfactor)*1E20*tree_amp[b_pos]*tree_len[b_pos]))
-          
+
     if len(charge_array):
       line = ','.join([datetime.datetime.fromtimestamp(e.daTime).strftime('%Y-%m-%d %H:%M:%S.000')]+
                        [str(ch) for ch in charge_array])
       csv_file.write(line+'\n')
 
   csv_file.close()
-  
+
   print '\t ** Finished with the file-making'
 
 
@@ -353,10 +382,10 @@ if __name__ == "__main__":
 
   formula1 = 'Sum$(b1_amp)'
   formula2 = 'Sum$(b2_amp)'
-  drawVStime(formula1, formula2, 'TOT', [0,3000], name="sumOfAmplitudes", title='Sum of amplitudes')
+  drawVStime(formula1, formula2, 'TOT', limitAmpSum, name="sumOfAmplitudes", title='Sum of amplitudes')
 
-  makeCSVfile('test-B1.csv',chain, beginTime, endTime, 'B1')
-  makeCSVfile('test-B2.csv',chain, beginTime, endTime, 'B2')
+  # makeCSVfile('test-B1.csv',chain, beginTime, endTime, 'B1')
+  # makeCSVfile('test-B2.csv',chain, beginTime, endTime, 'B2')
 
   # If the integral data is good:
   #formula1 = '1E9*Sum$(b1_int)'
@@ -364,17 +393,28 @@ if __name__ == "__main__":
   # If the integral is bad, can use simple area:
   formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)'
   formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)'
-  #drawVStime(formula1, formula2, 'TOT', [800,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
-  #           EXT1=['BCTFR.A6R4','B1_TOTINT'], EXT2=['BCTFR.A6R4','B2_TOTINT'])
-  drawVStime(formula1, formula2, 'TOT', [850,1100], name="totalCharge", title='Total beam charge, #times 10^{11}',
-             EXT1=['BCTDC.A6R4','B1_TOTINT'], EXT2=['BCTDC.A6R4','B2_TOTINT'])
+  E = None
+  if opt.atl:
+    E = [['ATLAS','B1_INT_SUM'], ['ATLAS','B2_INT_SUM']]
+  else:
+    E = [['BCTDC.A6R4','B1_TOTINT'], ['BCTDC.A6R4','B2_TOTINT']]
+    # E = [['BCTFR.A6R4','B1_TOTINT'], ['BCTFR.A6R4','B2_TOTINT']]
+
+  drawVStime(formula1, formula2, 'TOT', limitTotInt, name="totalCharge", title='Total beam charge, #times 10^{11}',
+             EXT1 = E[0], EXT2=E[1])
+
 
   formula1 = AtoIfactor1+'*1E9*Sum$(b1_amp*b1_len)/Length$(b1_amp)'
   formula2 = AtoIfactor2+'*1E9*Sum$(b2_amp*b2_len)/Length$(b2_amp)'
-  drawVStime(formula1, formula2, 'AVG', [0,3], name="averageCharge", title='Average bunch charge, #times 10^{11}')
+  # drawVStime(formula1, formula2, 'AVG', [0,3], name="averageCharge", title='Average bunch charge, #times 10^{11}')
+  drawVStime(formula1, formula2, 'AVG', limitAvgInt, name="averageCharge", title='Average bunch charge, #times 10^{11}',
+                          EXT1=['ATLAS','B1_INT_MEAN'], EXT2=['ATLAS','B2_INT_MEAN'])
 
 
-  for bb, sh in bunches.iteritems():
+  for bx in bx_AND[0:5]:
+    sh=0
+    #for bb, sh in bunches.iteritems():
+    bb = str(bx)
 
     print 'bb and sh =', bb, sh
 
@@ -383,9 +423,11 @@ if __name__ == "__main__":
 
     print 'Position of the BX=%s in the arrays, B1 and B2 ' % bb, b1,b2
 
-    if b1==None or b2==None:
+    if b1==None and b2==None:
       print 'Sorry, no bunches are found for BX=',bb
       continue
+    if b1==None: b1=''
+    if b2==None: b2=''
 
     # formula1 = ItoIfactor1+'*0.5*1e9*(b1_int['+b1+'])'
     # formula2 = ItoIfactor2+'*0.5*1e9*(b2_int['+b2+'])'
@@ -393,25 +435,41 @@ if __name__ == "__main__":
 
     formula1 = AtoIfactor1+'*1e9*(b1_amp['+b1+']*b1_len['+b1+'])'
     formula2 = AtoIfactor2+'*1e9*(b2_amp['+b2+']*b2_len['+b2+'])'
+    if b1=='': formula1='0'
+    if b2=='': formula2='0'
+
     #drawVStime(formula1, formula2, bb, [0,3], name="bunchIntensity", title='Charge, protons #times 10^{11}')
 
-    drawVStime(formula1, formula2, bb, [0.7,1.4], name="bunchIntensity", title='Charge, protons #times 10^{11}',
-               EXT1=['CMS.BPTX','B1_INT'], EXT2=['CMS.BPTX','B2_INT'])
-
-    #drawVStime(formula1, formula2, bb, [0.5,1.5], name="bunchIntensity", title='Charge, protons #times 10^{11}',
-    #           EXT1=['BCTFR.A6R4','B1_INT'], EXT2=['BCTFR.A6R4','B2_INT'])
+    if opt.cms:
+      E = [['CMS.BPTX','B1_INT'], ['CMS.BPTX','B2_INT']]
+    elif opt.atl:
+      E = [['ATLAS','B1_INT_BUNCH'], ['ATLAS','B2_INT_BUNCH']]
+    else:
+      E = [['BCTFR.A6R4','B1_INT'],['BCTFR.A6R4','B2_INT']]
+      
+    drawVStime(formula1, formula2, bb, limitAvgInt, name="bunchIntensity", title='Charge, protons #times 10^{11}',
+               EXT1=E[0], EXT2=E[1])
 
 
     formula1 = '1e9*(b1_len['+b1+'])'
     formula2 = '1e9*(b2_len['+b2+'])'
-    drawVStime(formula1, formula2, bb, [1.0,1.4], name="bunchLength", title='Pulse length, ns')
+    if b1=='': formula1='0'
+    if b2=='': formula2='0'
+    #drawVStime(formula1, formula2, bb, [1.0,1.4], name="bunchLength", title='Pulse length, ns')
+    
+    drawVStime(formula1, formula2, bb, limitLen, name="bunchLength", title='Pulse length, ns',
+                 EXT1=['ATLAS','B1_LEN'], EXT2=['ATLAS','B2_LEN'])
+    
 
     formula1 = '(b1_amp['+b1+'])'
     formula2 = '(b2_amp['+b2+'])'
+    if b1=='': formula1='0'
+    if b2=='': formula2='0'
     drawVStime(formula1, formula2, bb, [1,3], name="bunchAmplitude", title='Pulse amplitude, V')
 
 
-
+    ''' This part works, just commented out for time being
+    if b1==None or b2==None: continue
     # This one is special, let's leave it as is for right now
     dTcalib = '2.65'
     chain.Draw('1e9*(b1_time_zc['+b1+']-b2_time_zc['+b2+']) - '+
@@ -433,7 +491,7 @@ if __name__ == "__main__":
     gr1.SetMaximum(0.5)
     gr1.Draw("AP")
     #gr2.Draw("same P")
-    gr1.SetTitle('Fill '+str(fill) +', BX = '+bb +';UTC time;deltaT (B1-B2), ns')
+    gr1.SetTitle('Fill '+str(fill) +', BX = '+str(bb)+';UTC time;deltaT (B1-B2), ns')
 
     leg = TLegend(0.20,0.73,0.45,0.83)
     leg.AddEntry(gr1,"Zero-cross", "p")
@@ -441,10 +499,10 @@ if __name__ == "__main__":
     leg.SetFillColor(kWhite)
     # leg.Draw()
 
-    c1.SaveAs(outDir+"/"+'fill_'+str(fill)+'_deltaT_b_'+str(bb)+'_bptxmon.png')
+    c1.SaveAs(outDir+"/PerBX/"+'fill_'+str(fill)+'_deltaT_b_'+str(bb)+'_bptxmon.png')
     del(gr1)
     #del(gr2)
-
+    '''
 
     """
     shift = str(sh)+'e-6'

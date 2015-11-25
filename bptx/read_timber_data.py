@@ -67,7 +67,14 @@ def readTIMBER_TOT_INT(fill, source="ATLAS", datatype='B1_INT_MEAN', ):
     i+=1
     if i<=skiplines: continue
 
-    myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+    try:
+      myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+      print i, 'Bad format:',row[0]
+      print 'But we will continue'
+      continue
+      #exit(0)
+      
     dt = TDatime(int(myDateTime.year), int(myDateTime.month), int(myDateTime.day),
                  int(myDateTime.hour), int(myDateTime.minute), int(myDateTime.second))
     daTime = dt.Convert()
@@ -99,6 +106,8 @@ def readTIMBER_BX_INT(fill, BX='1', source="ATLAS", datatype='B1_INT_MEAN', ):
   except IOError:
     return gr
 
+  scale = 1E-11
+  if 'LEN' in file_data: scale = 1 
   skiplines = 10
   i=0
   for row in reader:
@@ -106,7 +115,12 @@ def readTIMBER_BX_INT(fill, BX='1', source="ATLAS", datatype='B1_INT_MEAN', ):
     if i<=skiplines: continue
     # if i<20: print len(row)
 
-    myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+    try:
+      myDateTime = datetime.strptime(row[0], "%Y-%m-%d %H:%M:%S.%f")
+    except IndexError:
+      print 'Index Error in ', row
+      print 'But will continue'
+      continue
     dt = TDatime(int(myDateTime.year), int(myDateTime.month),  int(myDateTime.day),
                  int(myDateTime.hour), int(myDateTime.minute), int(myDateTime.second))
     daTime = dt.Convert()
@@ -114,11 +128,9 @@ def readTIMBER_BX_INT(fill, BX='1', source="ATLAS", datatype='B1_INT_MEAN', ):
     # print i, BX, row[0], row[int(BX)]
 
     # gr.SetPoint(i-6,ddd, float(1))
-    gr.SetPoint(i-skiplines,ddd, 1E-11*float(row[int(BX)]))
+    gr.SetPoint(i-skiplines,ddd, scale*float(row[int(BX)]))
 
   return gr
-
-
 
 
 

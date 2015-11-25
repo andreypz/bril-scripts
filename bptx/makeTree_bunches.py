@@ -302,10 +302,9 @@ def testPlots(mytree):
 # Add init here
 
 dates_to_add = [
-  ["11","02"],
   ]
 
-for month in []:
+for month in ['11']:
 # for month in ['04','05','06','07','08','09','10','11']:
   for day in xrange(1,31):
     if day<10:
