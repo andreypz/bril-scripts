@@ -114,6 +114,7 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
             if row[20]!="-": stuff.bb_phase_mean  = float(row[20])
             if row[21]!="-": stuff.bb_phase_sigma = float(row[21])
 
+            # print 'Delta T = ', stuff.bb_phase_mean
             
         # if (len(row)!=22): print "len(row) = ", len(row)
         if len(row)==25:
@@ -151,12 +152,11 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
 #print beginTime, str(beginTime.Convert())
     
 dates_to_add = [
-  ["08","23"],
-  ["08","24"],
-  ["08","25"]
+  ["12","09"],
 ]
 
-for month in ['05','06','07','08','09','10']:
+for month in ['03']:
+#for month in ['05','06','07','08','09','10','11','12']:
     for day in xrange(1,31):
         if day<10:
             a = "0"+str(day)
@@ -167,7 +167,7 @@ for month in ['05','06','07','08','09','10']:
 print dates_to_add
 
 for d in dates_to_add:
-  fileName = "bptx_mon_timing_2015_"+d[0]+"_"+d[1]+"_UTC"
+  fileName = "bptx_mon_timing_2016_"+d[0]+"_"+d[1]+"_UTC"
   
   DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
   # DATAPATH = '../DATA/'

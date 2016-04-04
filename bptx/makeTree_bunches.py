@@ -4,10 +4,10 @@ import sys
 sys.argv.append( '-b' )
 
 import csv, sys
+import numpy as n
+import re
 from array import *
 from  ROOT import *
-import re
-import numpy as n
 
 csv.field_size_limit(sys.maxsize)
 
@@ -39,6 +39,7 @@ def convertToROOT(path, ascii_file):
   try:
     ascifilename = path+'/'+ascii_file+'.txt'
     spamReader = csv.reader(open(ascifilename, 'rb'), delimiter=' ', skipinitialspace=True)
+    print "ASCI file name =", ascifilename
   except IOError:
     print 'File %s does not exist' % (ascifilename)
     return
@@ -302,10 +303,11 @@ def testPlots(mytree):
 # Add init here
 
 dates_to_add = [
+  ['11','20'],
   ]
 
-for month in ['11']:
-# for month in ['04','05','06','07','08','09','10','11']:
+for month in ['03']:
+#for month in ['04','05','06','07','08','09','10','11']:
   for day in xrange(1,31):
     if day<10:
       a = "0"+str(day)
@@ -316,7 +318,7 @@ for month in ['11']:
 print dates_to_add
 
 for d in dates_to_add:
-  fileName = "bptx_mon_bunches_2015_"+d[0]+"_"+d[1]+"_UTC"
+  fileName = "bptx_mon_bunches_2016_"+d[0]+"_"+d[1]+"_UTC"
 
   DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
   convertToROOT(DATAPATH, fileName)

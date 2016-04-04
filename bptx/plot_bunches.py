@@ -25,9 +25,9 @@ fillNumber = sys.argv[1]
 if fillNumber == "0":
   c = f.LHCFills(0, TDatime(2015,9,17,2,10,00), None, TDatime(2015,9,17,2,15,00))
   TimeFormat ="%H:%M"
-  # For the whole history plots
-  # c = f.LHCFills(0, TDatime(2015,6,10,1,00,00), None, TDatime(2015,10,14,1,00,00))
-  # TimeFormat ="%d %b"
+  # For the whole history plots. Hmmm.. the bunches are not made for this.
+  #c = f.LHCFills(0, TDatime(2015,5,1,1,00,00), None, TDatime(2015,12,15,1,00,00))
+  #TimeFormat ="%d %b"
 else:
   c = f.LHCFills(fillNumber)
   TimeFormat ="%H:%M"
@@ -52,18 +52,23 @@ fill = c.Fill()
 beginTime  = c.Begin()
 if (c.Stable()!=None): stableTime = c.Stable()
 else:  stableTime = c.Begin()
-
 endTime    = c.End()
+
+print '\t begin time:'
+beginTime.Print()
+print '\t end time:'
+endTime.Print() 
 
 path = "../../BPTXMONDATA/"
 chain = TChain("bunchTree");
-#chain.Add(path+"root/all_bunches.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_09_16_UTC.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_08_24_UTC.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_08_26_UTC.root")
-chain.Add(path+"root/bptx_mon_bunches_2015_11_21_UTC.root")
+chain.Add(path+"root/all_bunches_2015.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_09_16_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_08_24_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_08_26_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_11_21_UTC.root")
+#chain.Add(path+"root/bptx_mon_bunches_2015_12_03_UTC.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -83,6 +88,15 @@ elif fill in ['4266']:
 elif fill in ['4381','4384']:
   limitTotInt = [800, 1100]
   limitAvgInt = [0.7, 1.2]
+elif fill in ['4689']:
+  limitTotInt = [20, 50]
+  limitAvgInt = [0., 0.2]
+  AtoIfactor1 = '0.5145';
+  AtoIfactor2 = '0.5165';
+
+else:
+  limitTotInt = [0, 2000]
+  limitAvgInt = [0.2, 1.5]
 
 print 'Chain N entries = ', chain.GetEntries()
 
@@ -125,10 +139,11 @@ bunches = {'1':0, '51':0, '91':0}
 b1_int = []
 b2_int = []
 
-outDir = './bunches/fill_'+fill
-createDir(outDir)
+#Create a firectory for the Fill
+outDir = './bunches/fill_'+str(fill)
+if not os.path.exists(outDir):
+  os.makedirs(outDir)
 createDir(outDir+'/PerBX')
-
 
 
 MagicNumber = '3564'
@@ -446,7 +461,7 @@ if __name__ == "__main__":
       E = [['ATLAS','B1_INT_BUNCH'], ['ATLAS','B2_INT_BUNCH']]
     else:
       E = [['BCTFR.A6R4','B1_INT'],['BCTFR.A6R4','B2_INT']]
-      
+
     drawVStime(formula1, formula2, bb, limitAvgInt, name="bunchIntensity", title='Charge, protons #times 10^{11}',
                EXT1=E[0], EXT2=E[1])
 
@@ -456,10 +471,10 @@ if __name__ == "__main__":
     if b1=='': formula1='0'
     if b2=='': formula2='0'
     #drawVStime(formula1, formula2, bb, [1.0,1.4], name="bunchLength", title='Pulse length, ns')
-    
+
     drawVStime(formula1, formula2, bb, limitLen, name="bunchLength", title='Pulse length, ns',
                  EXT1=['ATLAS','B1_LEN'], EXT2=['ATLAS','B2_LEN'])
-    
+
 
     formula1 = '(b1_amp['+b1+'])'
     formula2 = '(b2_amp['+b2+'])'
