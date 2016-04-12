@@ -1,13 +1,11 @@
 #! /usr/bin/python
 
-import sys
-sys.argv.append( '-b' )
-
-import csv, sys
+import sys, csv
 import numpy as n
 import re
 from array import *
-from  ROOT import *
+from ROOT import *
+gROOT.SetBatch()
 
 csv.field_size_limit(sys.maxsize)
 
@@ -27,6 +25,7 @@ Float_t cog_ddly_c3_c4;\
 Float_t cog_ddly_c1_c3;\
 Float_t cog_ddly_c2_c4;\
 Float_t cog_ddly_c1_c2;\
+Int_t bMode;\
 ULong64_t daTime;\
 };\
 TDatime beginTime(2011,12,01,13,00,00);\
@@ -64,6 +63,7 @@ def convertToROOT(path, ascii_file):
   b2_len       = array('f', ArrSize*[0])
   nCol         = array('i', [ 0 ] )
   deltaT       = array('f', [ 0 ] )
+  bMode        = array('i', [ 0 ] )
 
 
   rootFile    = TFile(path+'/root/'+ascii_file+'.root',"recreate")
@@ -89,6 +89,7 @@ def convertToROOT(path, ascii_file):
   bunchTree.Branch('b2_len', b2_len, 'b2_len[nB2]/F')
   bunchTree.Branch('nCol', nCol, 'nCol/I')
   bunchTree.Branch('deltaT', deltaT, 'deltaT/F')
+  bunchTree.Branch('bMode', bMode, 'bMode/I')
 
 
   i=0
@@ -236,6 +237,13 @@ def convertToROOT(path, ascii_file):
           deltaT[0]  = float(row[30])
 
 
+      if stuff.version>=4.8:
+        #print row[30:]
+        bMode = int(row[31])
+      else:
+        bMode = 0  
+
+          
       bunchTree.Fill()
       i+=1
 
@@ -303,10 +311,10 @@ def testPlots(mytree):
 # Add init here
 
 dates_to_add = [
-  ['11','20'],
+  ['',''],
   ]
 
-for month in ['03']:
+for month in ['04']:
 #for month in ['04','05','06','07','08','09','10','11']:
   for day in xrange(1,31):
     if day<10:

@@ -1,13 +1,10 @@
 #! /usr/bin/python
 
-import sys
-sys.argv.append( '-b' )
-
-import csv
+import sys, csv
+import re
 from array import *
 from  ROOT import *
-import re
-
+gROOT.SetBatch()
 
 gROOT.ProcessLine(
 "struct MyStruct {\
@@ -35,6 +32,8 @@ Double_t bb_phase_sigma;\
 Float_t bcmain_jitter;\
 Int_t b1_flag;\
 Int_t b2_flag;\
+Int_t nCol;\
+Int_t bMode;\
 ULong64_t daTime;\
 };\
 TDatime beginTime(2012,05,01,21,00,00);\
@@ -53,17 +52,17 @@ def convertToROOT(path, ascii_file):
       return
 
     stuff = MyStruct()
-    
+
     root_fileName = path+'/root/'+ascii_file+'.root'
     print "Creating the file: ", root_fileName
     root_file    = TFile(root_fileName,"recreate")
-    timeTree = TTree("timeTree","")  
-    
+    timeTree = TTree("timeTree","")
+
     timeTree.Branch("vars1", stuff, "version/F:status/I:scale/D:b1_offset:b1_gain:b2_offset:b2_gain:nB1/I:nB2/I:\
 b1_phase_min/D:b1_phase_max:b1_phase_mean:b1_phase_sigma:\
 b2_phase_min/D:b2_phase_max:b2_phase_mean:b2_phase_sigma:\
 bb_phase_min/D:bb_phase_max:bb_phase_mean:bb_phase_sigma:\
-bcmain_jitter/F:b1_flag/I:b2_flag/I")
+bcmain_jitter/F:b1_flag/I:b2_flag/I:nCol/I:bMode/I")
 
     timeTree.Branch("vars5",  AddressOf( stuff, 'daTime' ), "daTime/l")
 
@@ -72,10 +71,10 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
         # if i>500: break
         #print row
         if (row[0] == "#" or row[4]=="?"): continue
-        #if i>600:   print i, [row[a] for a in [16,17,18,8,9]] 
-        
+        #if i>600:   print i, [row[a] for a in [16,17,18,8,9]]
+
         stuff.version = float(row[0])
-        
+
         # Parse date and time, save as TDatime
         date = re.split("-|T|:|U|", row[1])
         # print date
@@ -83,7 +82,7 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
         stuff.daTime = dt.Convert()
         # stuff.daTime = dt.Convert(kTRUE)
         # dt.Print()
-    
+
         stuff.status    = bool(int(row[2]))
         try:
             stuff.scale     = float(row[3])
@@ -115,21 +114,27 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
             if row[21]!="-": stuff.bb_phase_sigma = float(row[21])
 
             # print 'Delta T = ', stuff.bb_phase_mean
-            
+
         # if (len(row)!=22): print "len(row) = ", len(row)
-        if len(row)==25:
+        if len(row)>21:
             stuff.bcmain_jitter = float(row[22])
             stuff.b1_flag = int(row[23])
             stuff.b2_flag = int(row[24])
-            #if date[3] in ["16","17"]:
-            #   print date, stuff.b1_flag, stuff.b2_flag
+
+        if stuff.version>=4.6:
+            stuff.nCol  = int(row[25])
+        if stuff.version>=4.8:
+            #print row[25:]
+            stuff.bMode = int(row[26])
+        else:
+            stuff.bMode = 0
 
         timeTree.Fill()
         i+=1
 
     timeTree.Write()
     print timeTree.GetEntries()
-    
+
     root_file.Close()
 
 
@@ -145,17 +150,17 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I")
     gr1.SetMarkerStyle(24);
     gr1.SetMarkerSize(0.2);
     gr1.SetMarkerColor(kBlue+2);
-    
+
     gr1.Draw("AP*")
     c1.SaveAs("h_1.png")
 '''
 #print beginTime, str(beginTime.Convert())
-    
+
 dates_to_add = [
-  ["12","09"],
+    ["",""],
 ]
 
-for month in ['03']:
+for month in ['03','04']:
 #for month in ['05','06','07','08','09','10','11','12']:
     for day in xrange(1,31):
         if day<10:
@@ -168,9 +173,7 @@ print dates_to_add
 
 for d in dates_to_add:
   fileName = "bptx_mon_timing_2016_"+d[0]+"_"+d[1]+"_UTC"
-  
+
   DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
   # DATAPATH = '../DATA/'
   convertToROOT(DATAPATH, fileName)
-
-
