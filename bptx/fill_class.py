@@ -16,6 +16,19 @@ class LHCFills():
 
             # Note: not all the Fills are in this list!
 
+        '5423':
+        [
+        TDatime(2016,10,17,21,00,00), 
+        TDatime(2016,10,17,22,00,00), 
+        TDatime(2016,10,18,16,35,00)
+        ],
+        '5422':
+        [
+        TDatime(2016,10,17,14,00,00), 
+        TDatime(2016,10,17,14,25,00), 
+        TDatime(2016,10,17,19,25,00)
+        ],
+
         '4690':
         [
         TDatime(2015,12,03,20,30,00), 

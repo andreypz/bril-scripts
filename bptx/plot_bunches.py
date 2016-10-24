@@ -59,16 +59,12 @@ beginTime.Print()
 print '\t end time:'
 endTime.Print() 
 
-path = "../../BPTXMONDATA/"
+#path = "../../BPTXMONDATA/"
+#path = "/scratch/bptx_data_2016/"
+path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
+
 chain = TChain("bunchTree");
-chain.Add(path+"root/all_bunches_2015.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_09_16_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_09_20_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_09_22_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_08_24_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_08_26_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_11_21_UTC.root")
-#chain.Add(path+"root/bptx_mon_bunches_2015_12_03_UTC.root")
+chain.Add(path+"all_bunches_2016.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -314,7 +310,7 @@ def drawVStime(formula1, formula2, BX, minmax, name="bunchIntegral",
       tag = 'CMS'
 
   else:
-    leg = TLegend(0.70,0.70,0.85,0.80)
+    leg = TLegend(0.70,0.80,0.85,0.90)
     leg.AddEntry(gr1,"Beam 1", "f")
     leg.AddEntry(gr2,"Beam 2", "f")
 
@@ -395,6 +391,8 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
 
 if __name__ == "__main__":
 
+  ''' 
+
   formula1 = 'Sum$(b1_amp)'
   formula2 = 'Sum$(b2_amp)'
   drawVStime(formula1, formula2, 'TOT', limitAmpSum, name="sumOfAmplitudes", title='Sum of amplitudes')
@@ -426,10 +424,16 @@ if __name__ == "__main__":
                           EXT1=['ATLAS','B1_INT_MEAN'], EXT2=['ATLAS','B2_INT_MEAN'])
 
 
-  for bx in bx_AND[0:5]:
+  '''
+
+  #bxList = bx_AND[0:5]
+  bxList = [60,61,62, 560,561,562, 1160,1161,1162, 1760,1761,1762, 
+            2160,2161,2162, 2660,2662,2662]
+
+  for bx in bxList:
     sh=0
     #for bb, sh in bunches.iteritems():
-    bb = str(bx)
+    bb = str(bx).zfill(4)
 
     print 'bb and sh =', bb, sh
 
@@ -448,6 +452,7 @@ if __name__ == "__main__":
     # formula2 = ItoIfactor2+'*0.5*1e9*(b2_int['+b2+'])'
     # drawVStime(formula1, formula2, [0,3], name="bunchIntegral", title='Intensity, protons #times 10^{11}')
 
+    ''' Commented XX
     formula1 = AtoIfactor1+'*1e9*(b1_amp['+b1+']*b1_len['+b1+'])'
     formula2 = AtoIfactor2+'*1e9*(b2_amp['+b2+']*b2_len['+b2+'])'
     if b1=='': formula1='0'
@@ -482,8 +487,23 @@ if __name__ == "__main__":
     if b2=='': formula2='0'
     drawVStime(formula1, formula2, bb, [1,3], name="bunchAmplitude", title='Pulse amplitude, V')
 
+    XX
+    '''
 
-    ''' This part works, just commented out for time being
+    constOffset = 6606.6 # It's in nanosecs
+    BXlength = 24.95084
+    sh1 =  constOffset + (bx-1)*BXlength
+    sh2 =  constOffset + (bx-1)*BXlength - 2.65
+
+    formula1 = '(1e9*b1_time_zc['+b1+'] - %.2f)' % sh1 
+    formula2 = '(1e9*b2_time_zc['+b2+'] - %.2f)' % sh2
+    if b1=='': formula1='0'
+    if b2=='': formula2='0'
+    drawVStime(formula1, formula2, bb, [-0.3,0.3], name="bunchPosition", title='Position - (BXNUM - 1) #times'+str(BXlength)+', ns')
+
+
+
+    ''' This part works, just commented out for time being 
     if b1==None or b2==None: continue
     # This one is special, let's leave it as is for right now
     dTcalib = '2.65'
@@ -517,6 +537,8 @@ if __name__ == "__main__":
     c1.SaveAs(outDir+"/PerBX/"+'fill_'+str(fill)+'_deltaT_b_'+str(bb)+'_bptxmon.png')
     del(gr1)
     #del(gr2)
+
+    End of comment 
     '''
 
     """
