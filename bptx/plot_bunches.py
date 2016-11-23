@@ -35,6 +35,18 @@ else:
 # This will over-write the Times above:
 #c = f.LHCFills(4565)
 
+# These are for studies in FILL 5423:
+T1 = TDatime(2016,10,18,12,40,00)
+T2 = TDatime(2016,10,18,12,42,00)
+T3 = TDatime(2016,10,18,16,30,00)
+T4 = TDatime(2016,10,18,16,32,00)
+t1 = str(T1.Convert())
+t2 = str(T2.Convert())
+t3 = str(T3.Convert())
+t4 = str(T4.Convert())
+
+
+
 def createDir(myDir):
   if not os.path.exists(myDir):
     try: os.makedirs(myDir)
@@ -57,11 +69,11 @@ endTime    = c.End()
 print '\t begin time:'
 beginTime.Print()
 print '\t end time:'
-endTime.Print() 
+endTime.Print()
 
-#path = "../../BPTXMONDATA/"
+path = '/home/andrey/BPTXMONDATA/'
 #path = "/scratch/bptx_data_2016/"
-path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
+#path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
 
 chain = TChain("bunchTree");
 chain.Add(path+"all_bunches_2016.root")
@@ -96,8 +108,8 @@ else:
 
 print 'Chain N entries = ', chain.GetEntries()
 
-b1_bunches = []
-b2_bunches = []
+B1_bunches = []
+B2_bunches = []
 
 #orbit2_wrt_orbit1 = 32.4142744
 #bptx1_wrt_orbit1  = 6.621972
@@ -153,14 +165,14 @@ for binN in xrange(0,int(MagicNumber)):
   if pat1.GetBinContent(binN)>10:
     Nbunches+=1
     #print Nbunches, binN-1, pat1.GetBinContent(binN)
-    b1_bunches.append(binN-1)
+    B1_bunches.append(binN-1)
 
 Nbunches = 0
 for binN in xrange(0,int(MagicNumber)):
   if pat2.GetBinContent(binN)>10:
     Nbunches+=1
     #print Nbunches, binN-1, pat2.GetBinContent(binN)
-    b2_bunches.append(binN-1)
+    B2_bunches.append(binN-1)
 
 chain.Draw('nB1', 'daTime>'+ stable + '&& daTime<'+end)
 c1.SaveAs(outDir+"/"+'fill_'+str(fill)+"_NB1.png")
@@ -168,18 +180,18 @@ chain.Draw('nB2', 'daTime>'+ stable + '&& daTime<'+end)
 c1.SaveAs(outDir+"/"+'fill_'+str(fill)+"_NB2.png")
 
 
-b1_bunches = sorted(list(set(b1_bunches).difference(set([0]))))
-b2_bunches = sorted(list(set(b2_bunches).difference(set([0]))))
-bx_AND = sorted(list(set(b1_bunches) & set(b2_bunches)))
-bx_OR  = sorted(list(set(b1_bunches) | set(b2_bunches)))
-b1_XOR = sorted(list(set(b1_bunches).difference(set(b2_bunches))))
-b2_XOR = sorted(list(set(b2_bunches).difference(set(b1_bunches))))
+B1_bunches = sorted(list(set(B1_bunches).difference(set([0]))))
+B2_bunches = sorted(list(set(B2_bunches).difference(set([0]))))
+bx_AND = sorted(list(set(B1_bunches) & set(B2_bunches)))
+bx_OR  = sorted(list(set(B1_bunches) | set(B2_bunches)))
+b1_XOR = sorted(list(set(B1_bunches).difference(set(B2_bunches))))
+b2_XOR = sorted(list(set(B2_bunches).difference(set(B1_bunches))))
 
-print 'B1  = ', b1_bunches
-print 'B2  = ', b2_bunches
+print 'B1  = ', B1_bunches
+print 'B2  = ', B2_bunches
 print '\n\n AND  = ', bx_AND
 print 'XORS = ', b1_XOR, b2_XOR
-print "\n N_B1 = ",len(b1_bunches), "N_B2 = ", len(b2_bunches)
+print "\n N_B1 = ",len(B1_bunches), "N_B2 = ", len(B2_bunches)
 print "N_AND = ",len(bx_AND), "N_OR = ", len(bx_OR)
 
 
@@ -193,21 +205,26 @@ def getPositionInArray(myarray, BX=1):
   return b
 
 
-def makeHists(var, names, shift, lim, bunch):
+def makeHists(var, names, shifts, lim, bb):
   # This function does not work for some reason
 
-  if shift!=None:
-    queryb1 = '1e9*(b1_%s[%i]-%.6fe-6)>>hh1(150,%.1f,%.1f)' %(var, bunch, shift, lim[0], lim[1])
-    queryb2 = '1e9*(b2_%s[%i]-%.6fe-6)>>hh2(150,%.1f,%.1f)' %(var, bunch, shift, lim[0], lim[1])
+  b1 = int(getPositionInArray(B1_bunches, int(bb)))
+  b2 = int(getPositionInArray(B2_bunches, int(bb)))
+
+
+  if shifts!=None:
+    queryb1 = '(1e9*b1_%s[%i]-%.3f)>>hh1(150,%.1f,%.1f)' %(var, b1, shifts[0], lim[0], lim[1])
+    queryb2 = '(1e9*b2_%s[%i]-%.3f)>>hh2(150,%.1f,%.1f)' %(var, b2, shifts[1], lim[0], lim[1])
+  else:
+    sys.exit(1)
 
   print queryb1
   print queryb2
 
-  #hh1 =  TH1F('n1','n1',150, lim[0], lim[1])
-  #hh2 =  TH1F('n2','n2',150, lim[0], lim[1])
-
   chain.Draw(queryb1, 'daTime>'+ stable + '&& daTime<'+end, 'hist')
   chain.Draw(queryb2, 'daTime>'+ stable + '&& daTime<'+end, 'hist same')
+  hh1 = gDirectory.Get("hh1")
+  hh2 = gDirectory.Get("hh2")
 
   hh1.Print()
   hh2.Print()
@@ -219,19 +236,19 @@ def makeHists(var, names, shift, lim, bunch):
   #hh3.SetLineColor(kBlue+3)
   #h4.SetLineColor(kRed+3)
   hh1.SetNdivisions(505,"X")
-  hh1.SetTitle('Fill '+str(fill) +', BX = '+ bunch+';'+names[0]+'; entries')
+  hh1.SetTitle('Fill '+str(fill) +', BX = '+bb+';Time, ns; entries')
   #chain.Draw('(1e9)*(b2_time_le['+b+']-'+shift+')', 'daTime>'+ stable + '&& daTime<'+end, 'hist')
   #h2    =  gPad.GetPrimitive("htemp")
   #h2.Draw("hist")
   leg = TLegend(0.20,0.6,0.45,0.80)
-  leg.AddEntry(hh1,"Beam 1, zero-cross", "l")
-  leg.AddEntry(hh2,"Beam 2, zero-cross", "l")
+  leg.AddEntry(hh1,"Beam 1, %s"%names[0], "l")
+  leg.AddEntry(hh2,"Beam 2, %s"%names[1], "l")
   #leg.AddEntry(h2,"Beam 1, leading-ed", "l")
   #leg.AddEntry(h4,"Beam 2, leading-ed", "l")
   leg.SetFillColor(kWhite)
   leg.Draw()
 
-  c1.SaveAs(outDir+"/"+'fill_'+str(fill)+names[1]+str(bunch)+'_bptxmon.png')
+  c1.SaveAs(outDir+"/"+'_'.join(['fill',str(fill),names[0],'BX',bb,'bptxmon.png']))
   del(hh1)
   #del(h2)
   del(hh2)
@@ -343,14 +360,14 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
 
     if Beam=='B1':
       tree_bunches = e.b1_bunches
-      array_bunches = b1_bunches
+      array_bunches = B1_bunches
       tree_amp = e.b1_amp
       tree_len = e.b1_len
       AtoIfactor = AtoIfactor1
 
     elif Beam=='B2':
       tree_bunches = e.b2_bunches
-      array_bunches = b2_bunches
+      array_bunches = B2_bunches
       tree_amp = e.b2_amp
       tree_len = e.b2_len
       AtoIfactor = AtoIfactor2
@@ -361,7 +378,7 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
     if len(tree_bunches)!=len(array_bunches):
       print '\t ** WARNING: Number of bunches dont agree', len(tree_bunches), len(array_bunches)
       continue
-    # print e.daTime, len(b1_bunches)
+    # print e.daTime, len(B1_bunches)
     charge_array=[0]*3564
 
     for b in tree_bunches:
@@ -391,7 +408,7 @@ def makeCSVfile(fname,btree, begin_t, end_t, Beam='B1'):
 
 if __name__ == "__main__":
 
-  ''' 
+  '''
 
   formula1 = 'Sum$(b1_amp)'
   formula2 = 'Sum$(b2_amp)'
@@ -426,9 +443,76 @@ if __name__ == "__main__":
 
   '''
 
+
   #bxList = bx_AND[0:5]
-  bxList = [60,61,62, 560,561,562, 1160,1161,1162, 1760,1761,1762, 
-            2160,2161,2162, 2660,2662,2662]
+
+
+  constOffset = 6606.6 # It's in nanosecs
+  BXlength = 24.95084
+  ORB = 88924.75471
+
+  formula1 = '(1e9*b1_time_zc - (%.5f  +  (b1_bunches-1)*%.5f ) + 0.03):b1_bunches' % (constOffset, BXlength)
+  formula2 = '(1e9*b2_time_zc - (%.5f  +  (b2_bunches-1)*%.5f ) + 2.60 ):b2_bunches' % (constOffset, BXlength)
+
+  chain.Draw(formula1, 'daTime>'+ t1 + '&& daTime<'+t2)
+  g1 = TGraph(gPad.GetPrimitive("Graph"))
+  chain.Draw(formula2, 'daTime>'+ t1 + '&& daTime<'+t2)
+  g2 = TGraph(gPad.GetPrimitive("Graph"))
+  formula1 = '(1e9*b1_time_zc - (%.5f  +  (b1_bunches-1)*%.5f ) + 0.06 ):b1_bunches' % (constOffset, BXlength)
+  formula2 = '(1e9*b2_time_zc - (%.5f  +  (b2_bunches-1)*%.5f ) + 2.64 ):b2_bunches' % (constOffset, BXlength)
+
+  chain.Draw(formula1, 'daTime>'+ t3 + '&& daTime<'+t4)
+  g3 = TGraph(gPad.GetPrimitive("Graph"))
+  chain.Draw(formula2, 'daTime>'+ t3 + '&& daTime<'+t4)
+  g4 = TGraph(gPad.GetPrimitive("Graph"))
+
+  print formula1
+  print formula2
+  
+  g1.SetMarkerColor(kBlue)
+  g2.SetMarkerColor(kRed)
+  g3.SetMarkerColor(kBlue+3)
+  g4.SetMarkerColor(kRed+3)
+  g1.SetFillColor(kBlue)
+  g2.SetFillColor(kRed)
+  g3.SetFillColor(kBlue+3)
+  g4.SetFillColor(kRed+3)
+  
+  g1.SetMarkerStyle(6)
+  g2.SetMarkerStyle(6)
+  g3.SetMarkerStyle(6)
+  g4.SetMarkerStyle(6)
+
+  g1.Draw('AP')
+  g2.Draw('P same')
+  g3.Draw('P same')
+  g4.Draw('P same')
+
+  g1.SetMinimum(-0.09)
+  g1.SetMaximum(0.08)
+  g1.SetTitle('FILL '+str(fill)+';BX number;Time offset, ns')
+      
+  leg = TLegend(0.60,0.73,0.85,0.90)
+  leg.AddEntry(g1,"B1 @12:40 UTC", "f")
+  leg.AddEntry(g2,"B2 @12:40 UTC", "f")
+  leg.AddEntry(g3,"B1 @16:30 UTC", "f")
+  leg.AddEntry(g4,"B2 @16:30 UTC", "f")
+  leg.SetFillColor(kWhite)
+  leg.Draw()
+
+  lat = TLatex()
+  lat.SetNDC()
+  lat.SetTextSize(0.07)
+  lat.DrawLatex(0.20,0.85, 'CMS BPTX')
+  
+  c1.SaveAs(outDir+'/'+'_'.join(['fill',str(fill),'LHCRF','bptxmon.png']))
+
+  del(g1)
+  del(g2)
+  del(g3)
+  del(g4)
+
+  bxList = [60,61, 3300,3301]
 
   for bx in bxList:
     sh=0
@@ -437,8 +521,8 @@ if __name__ == "__main__":
 
     print 'bb and sh =', bb, sh
 
-    b1 = getPositionInArray(b1_bunches, int(bb))
-    b2 = getPositionInArray(b2_bunches, int(bb))
+    b1 = getPositionInArray(B1_bunches, int(bb))
+    b2 = getPositionInArray(B2_bunches, int(bb))
 
     print 'Position of the BX=%s in the arrays, B1 and B2 ' % bb, b1,b2
 
@@ -447,6 +531,13 @@ if __name__ == "__main__":
       continue
     if b1==None: b1=''
     if b2==None: b2=''
+
+
+    sh1 =  constOffset + (bx-1)*BXlength
+    sh2 =  constOffset + (bx-1)*BXlength - 2.65
+
+    print bb, 'B1: ', b1, sh1
+    print bb, 'B2: ', b2, sh2
 
     # formula1 = ItoIfactor1+'*0.5*1e9*(b1_int['+b1+'])'
     # formula2 = ItoIfactor2+'*0.5*1e9*(b2_int['+b2+'])'
@@ -490,20 +581,23 @@ if __name__ == "__main__":
     XX
     '''
 
-    constOffset = 6606.6 # It's in nanosecs
-    BXlength = 24.95084
-    sh1 =  constOffset + (bx-1)*BXlength
-    sh2 =  constOffset + (bx-1)*BXlength - 2.65
 
-    formula1 = '(1e9*b1_time_zc['+b1+'] - %.2f)' % sh1 
+    if int(bb)>3300:
+      # Those are roll-over bunches, apperently a 25ns shift needs to be added to them:
+      sh1 -= ORB
+      sh2 -= ORB
+
+    formula1 = '(1e9*b1_time_zc['+b1+'] - %.2f)' % sh1
     formula2 = '(1e9*b2_time_zc['+b2+'] - %.2f)' % sh2
     if b1=='': formula1='0'
     if b2=='': formula2='0'
     drawVStime(formula1, formula2, bb, [-0.3,0.3], name="bunchPosition", title='Position - (BXNUM - 1) #times'+str(BXlength)+', ns')
 
 
+    # makeHists('time_zc', ['name_1', 'name_2'], [sh1, sh2], [-0.3,0.3], bb)
 
-    ''' This part works, just commented out for time being 
+
+    ''' This part works, just commented out for time being
     if b1==None or b2==None: continue
     # This one is special, let's leave it as is for right now
     dTcalib = '2.65'
@@ -538,7 +632,7 @@ if __name__ == "__main__":
     del(gr1)
     #del(gr2)
 
-    End of comment 
+    End of comment
     '''
 
     """
@@ -583,8 +677,6 @@ if __name__ == "__main__":
     #del(h2)
     del(h3)
     #del(h4)
-
-    #makeHists('time_zc', ['name_1', 'name_2'], sh, [0,80], int(bb))
 
 
     chain.Draw('1e9*(b1_time_zc['+b+']-'+shift+'):daTime-'+begin, 'daTime>'+ stable + '&& daTime<'+end)
