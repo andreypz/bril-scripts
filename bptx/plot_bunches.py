@@ -35,18 +35,6 @@ else:
 # This will over-write the Times above:
 #c = f.LHCFills(4565)
 
-# These are for studies in FILL 5423:
-T1 = TDatime(2016,10,18,12,40,00)
-T2 = TDatime(2016,10,18,12,42,00)
-T3 = TDatime(2016,10,18,16,30,00)
-T4 = TDatime(2016,10,18,16,32,00)
-t1 = str(T1.Convert())
-t2 = str(T2.Convert())
-t3 = str(T3.Convert())
-t4 = str(T4.Convert())
-
-
-
 def createDir(myDir):
   if not os.path.exists(myDir):
     try: os.makedirs(myDir)
@@ -445,72 +433,6 @@ if __name__ == "__main__":
 
 
   #bxList = bx_AND[0:5]
-
-
-  constOffset = 6606.6 # It's in nanosecs
-  BXlength = 24.95084
-  ORB = 88924.75471
-
-  formula1 = '(1e9*b1_time_zc - (%.5f  +  (b1_bunches-1)*%.5f ) + 0.03):b1_bunches' % (constOffset, BXlength)
-  formula2 = '(1e9*b2_time_zc - (%.5f  +  (b2_bunches-1)*%.5f ) + 2.60 ):b2_bunches' % (constOffset, BXlength)
-
-  chain.Draw(formula1, 'daTime>'+ t1 + '&& daTime<'+t2)
-  g1 = TGraph(gPad.GetPrimitive("Graph"))
-  chain.Draw(formula2, 'daTime>'+ t1 + '&& daTime<'+t2)
-  g2 = TGraph(gPad.GetPrimitive("Graph"))
-  formula1 = '(1e9*b1_time_zc - (%.5f  +  (b1_bunches-1)*%.5f ) + 0.06 ):b1_bunches' % (constOffset, BXlength)
-  formula2 = '(1e9*b2_time_zc - (%.5f  +  (b2_bunches-1)*%.5f ) + 2.64 ):b2_bunches' % (constOffset, BXlength)
-
-  chain.Draw(formula1, 'daTime>'+ t3 + '&& daTime<'+t4)
-  g3 = TGraph(gPad.GetPrimitive("Graph"))
-  chain.Draw(formula2, 'daTime>'+ t3 + '&& daTime<'+t4)
-  g4 = TGraph(gPad.GetPrimitive("Graph"))
-
-  print formula1
-  print formula2
-  
-  g1.SetMarkerColor(kBlue)
-  g2.SetMarkerColor(kRed)
-  g3.SetMarkerColor(kBlue+3)
-  g4.SetMarkerColor(kRed+3)
-  g1.SetFillColor(kBlue)
-  g2.SetFillColor(kRed)
-  g3.SetFillColor(kBlue+3)
-  g4.SetFillColor(kRed+3)
-  
-  g1.SetMarkerStyle(6)
-  g2.SetMarkerStyle(6)
-  g3.SetMarkerStyle(6)
-  g4.SetMarkerStyle(6)
-
-  g1.Draw('AP')
-  g2.Draw('P same')
-  g3.Draw('P same')
-  g4.Draw('P same')
-
-  g1.SetMinimum(-0.09)
-  g1.SetMaximum(0.08)
-  g1.SetTitle('FILL '+str(fill)+';BX number;Time offset, ns')
-      
-  leg = TLegend(0.60,0.73,0.85,0.90)
-  leg.AddEntry(g1,"B1 @12:40 UTC", "f")
-  leg.AddEntry(g2,"B2 @12:40 UTC", "f")
-  leg.AddEntry(g3,"B1 @16:30 UTC", "f")
-  leg.AddEntry(g4,"B2 @16:30 UTC", "f")
-  leg.SetFillColor(kWhite)
-  leg.Draw()
-
-  lat = TLatex()
-  lat.SetNDC()
-  lat.SetTextSize(0.07)
-  lat.DrawLatex(0.20,0.85, 'CMS BPTX')
-  
-  c1.SaveAs(outDir+'/'+'_'.join(['fill',str(fill),'LHCRF','bptxmon.png']))
-
-  del(g1)
-  del(g2)
-  del(g3)
-  del(g4)
 
   bxList = [60,61, 3300,3301]
 

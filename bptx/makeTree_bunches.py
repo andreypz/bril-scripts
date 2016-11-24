@@ -7,6 +7,12 @@ from array import *
 from ROOT import *
 gROOT.SetBatch()
 
+DATAPATH = '/scratch/bptx_data_2016/'
+# DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
+
+# This number is tuned from Fill 5423:
+ORBIT_LEN = 88924.796 # in nanoseconds
+
 csv.field_size_limit(sys.maxsize)
 
 gROOT.ProcessLine(
@@ -41,7 +47,7 @@ def convertToROOT(path, ascii_file):
     print "ASCI file name =", ascifilename
   except IOError:
     print 'File %s does not exist' % (ascifilename)
-    return
+    return 666
 
   stuff = MyStruct()
 
@@ -169,9 +175,13 @@ def convertToROOT(path, ascii_file):
 
               for a in range (0,29):
                   print a, row[a][:40]
-              return
+              return 666
 
-          b1_time_zc[j]  = time_zc[j]
+
+          b1_time_zc[j] = time_zc[j]
+          if bunchNum[j] > 3300:
+            b1_time_zc[j] += ORBIT_LEN*1e-9
+
           b1_amp[j]      = amp[j]
           if nB1[0]!=0 and nB2[0]!=0:
               b1_int[j] = integ[j]
@@ -190,8 +200,11 @@ def convertToROOT(path, ascii_file):
           except IndexError:
               print 'Warning: out of range... but will continue'
               print 'bunchNum', bunchNum
-              return
+              return 666
           b2_time_zc[j]  = time_zc[j]
+          if bunchNum[j] > 3300:
+            b2_time_zc[j] += ORBIT_LEN*1e-9
+
           b2_amp[j]      = amp[j]
           if nB1[0]!=0 and nB2[0]!=0:
               b2_int[j] = integ[j]
@@ -252,7 +265,7 @@ def convertToROOT(path, ascii_file):
 
   rootFile.Close()
 
-
+  return 42
 
 def testPlots(mytree):
 
@@ -308,28 +321,35 @@ def testPlots(mytree):
     c1.SaveAs("h_1.png")
     '''
 
-# Add init here
 
-dates_to_add = [
-  ['',''],
-  ]
+if __name__ == "__main__":
 
-for month in ['04']:
-#for month in ['04','05','06','07','08','09','10','11']:
-  for day in xrange(1,31):
-    if day<10:
-      a = "0"+str(day)
-    else:
-      a = str(day)
-    dates_to_add.append([month,a])
+  dates_to_add = [
+    ['10','21']
+    ]
 
-print dates_to_add
+  for month in ['03','04','05','06','07','08','09','10','11']:
+    for day in xrange(1,31):
+      if day<10:
+        a = "0"+str(day)
+      else:
+        a = str(day)
+      dates_to_add.append([month,a])
 
-for d in dates_to_add:
-  fileName = "bptx_mon_bunches_2016_"+d[0]+"_"+d[1]+"_UTC"
+  print dates_to_add
 
-  DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
-  convertToROOT(DATAPATH, fileName)
+  from multiprocessing import Pool, TimeoutError  
+  pool = Pool(processes=8)
 
-# Do hadd here
-#chain.Add(path+"root/all_bunches.root")
+  for d in dates_to_add:
+    fileName = "bptx_mon_bunches_2016_"+d[0]+"_"+d[1]+"_UTC"
+    
+    #convertToROOT(DATAPATH, fileName)
+    pool.apply_async(convertToROOT, args = (DATAPATH, fileName,))
+
+
+  pool.close()  
+  pool.join()
+
+  # Do hadd here
+  # chain.Add(path+"root/all_bunches.root")
