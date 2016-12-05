@@ -64,7 +64,7 @@ for l in lines:
     i+=1
 '''
 
-deltaT_lim      = [-0.05, 0.05]
+deltaT_lim      = [-0.03, 0.03]
 deltaTsigma_lim = [0, 0.06]
 beam_phase_lim  = [-0.6,0.6]
 offset_lim      = [-1.4, 0.2]
@@ -72,7 +72,7 @@ gain_lim        = [0., 1.0]
 scale_lim       = [0.4, 1.]
 scopeGainCut = '0.01'
 
-lim = {'bb_phase_mean':[-0.05, 0.05],
+lim = {'bb_phase_mean':[-0.02, 0.03],
        'bb_phase_sigma':[0, 0.06],
        'phase_mean': [-0.2, 0.2],
        'phase_min':  [-0.2, 0.2],
@@ -80,10 +80,9 @@ lim = {'bb_phase_mean':[-0.05, 0.05],
        }
 
 
-#path = "/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/"
-path = "/scratch/bptx_data_2016/"
+path = "/home/andrey/BPTXMONDATA/"
 chain = TChain("timeTree");
-chain.Add(path+"root/all_timing_2016.root")
+chain.Add(path+"/all_timing_2016.root")
 
 print chain.GetEntries()
 
