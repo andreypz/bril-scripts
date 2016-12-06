@@ -7,8 +7,8 @@ from array import *
 from ROOT import *
 gROOT.SetBatch()
 
-DATAPATH = '/scratch/bptx_data_2016/'
-# DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
+#DATAPATH = '/scratch/bptx_data_2016/'
+DATAPATH = '/afs/cern.ch/user/a/andrey/public/BRIL/RF_LHC_Fill_5423/data/'
 
 # This number is tuned from Fill 5423:
 ORBIT_LEN = 88924.796 # in nanoseconds
@@ -75,8 +75,7 @@ def convertToROOT(path, ascii_file):
   rootFile    = TFile(path+'/root/'+ascii_file+'.root',"recreate")
   bunchTree = TTree("bunchTree","")
 
-  bunchTree.Branch("vars", stuff, "version/F:status/i:scale/F:b1_offset:b1_gain:b2_offset:b2_gain:\
-  orb_len_trig:orb_len_1:orb_1_2:cog_ddly_c3_c4:cog_ddly_c1_c3:cog_ddly_c2_c4:cog_ddly_c1_c2")
+  bunchTree.Branch("vars", stuff, "version/F:status/i:scale/F:b1_offset:b1_gain:b2_offset:b2_gain:orb_len_trig:orb_len_1:orb_1_2:cog_ddly_c3_c4:cog_ddly_c1_c3:cog_ddly_c2_c4:cog_ddly_c1_c2")
   bunchTree.Branch("time",  AddressOf( stuff, 'daTime' ), "daTime/l")
 
   bunchTree.Branch('nB1', nB1, 'nB1/I')
@@ -254,9 +253,9 @@ def convertToROOT(path, ascii_file):
         #print row[30:]
         bMode = int(row[31])
       else:
-        bMode = 0  
+        bMode = 0
 
-          
+
       bunchTree.Fill()
       i+=1
 
@@ -324,31 +323,30 @@ def testPlots(mytree):
 
 if __name__ == "__main__":
 
+  # Format: ['month','day']
   dates_to_add = [
-    ['10','21']
+    ['10','22']
     ]
 
-  for month in ['03','04','05','06','07','08','09','10','11']:
-    for day in xrange(1,31):
-      if day<10:
-        a = "0"+str(day)
-      else:
-        a = str(day)
-      dates_to_add.append([month,a])
+  for month in xrange(3,12+1):
+    for day in xrange(1,31+1):
+      a = str(day).zfill(2)
+      m = str(month).zfill(2)
+      # dates_to_add.append([m, a])
 
   print dates_to_add
 
-  from multiprocessing import Pool, TimeoutError  
+  from multiprocessing import Pool, TimeoutError
   pool = Pool(processes=8)
 
   for d in dates_to_add:
     fileName = "bptx_mon_bunches_2016_"+d[0]+"_"+d[1]+"_UTC"
-    
+
     #convertToROOT(DATAPATH, fileName)
     pool.apply_async(convertToROOT, args = (DATAPATH, fileName,))
 
 
-  pool.close()  
+  pool.close()
   pool.join()
 
   # Do hadd here

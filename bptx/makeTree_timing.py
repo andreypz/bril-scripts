@@ -6,6 +6,8 @@ from array import *
 from  ROOT import *
 gROOT.SetBatch()
 
+DATAPATH = '/scratch/bptx_data_2016/'
+
 gROOT.ProcessLine(
 "struct MyStruct {\
 Float_t version;\
@@ -137,43 +139,35 @@ bcmain_jitter/F:b1_flag/I:b2_flag/I:nCol/I:bMode/I")
 
     root_file.Close()
 
+    return 42
 
-'''
-    gStyle.SetTimeOffset(beginTime.Convert());
-    begin = str(beginTime.Convert())
-    timeTree.Draw('bb_phase_mean:daTime-'+begin)
-    gr1= TGraph(gPad.GetPrimitive("Graph"))
-    gr1.GetXaxis().SetTimeDisplay(1);
-    gr1.GetXaxis().SetTimeFormat("%H:%M");
-    gr1.GetXaxis().SetLabelSize(0.03);
-    gr1.GetXaxis().SetLabelOffset(0.02);
-    gr1.SetMarkerStyle(24);
-    gr1.SetMarkerSize(0.2);
-    gr1.SetMarkerColor(kBlue+2);
+if __name__ == "__main__":  
 
-    gr1.Draw("AP*")
-    c1.SaveAs("h_1.png")
-'''
-#print beginTime, str(beginTime.Convert())
+    # Format: ['month','day']
+    dates_to_add = [
+        ["10","23"],
+        ["10","25"],
+        ["10","27"],
+    ]
+    
+    for month in xrange(3,12+1):
+        for day in xrange(1,31+1):
+            a = str(day).zfill(2)
+            m = str(month).zfill(2)
+            dates_to_add.append([m, a])
+    
+    print dates_to_add
 
-dates_to_add = [
-    ["",""],
-]
 
-for month in ['04']:
-#for month in ['05','06','07','08','09','10','11','12']:
-    for day in xrange(1,31):
-        if day<10:
-            a = "0"+str(day)
-        else:
-            a = str(day)
-        dates_to_add.append([month,a])
+    from multiprocessing import Pool, TimeoutError
+    pool = Pool(processes=8)
 
-print dates_to_add
+    for d in dates_to_add:
+      fileName = "bptx_mon_timing_2016_"+d[0]+"_"+d[1]+"_UTC"
+      pool.apply_async(convertToROOT, args = (DATAPATH, fileName,))
+      # convertToROOT(DATAPATH, fileName)
 
-for d in dates_to_add:
-  fileName = "bptx_mon_timing_2016_"+d[0]+"_"+d[1]+"_UTC"
-
-  DATAPATH = '/afs/cern.ch/user/a/andrey/work/BPTXMONDATA/'
-  # DATAPATH = '../DATA/'
-  convertToROOT(DATAPATH, fileName)
+    pool.close()
+    pool.join()
+    
+    

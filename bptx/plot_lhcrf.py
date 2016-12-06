@@ -3,26 +3,34 @@
 from  ROOT import *
 gROOT.SetBatch()
 
-path = '/home/andrey/BPTXMONDATA/'
+#path = '/home/andrey/BPTXMONDATA/'
+#path = '~/work/BPTXMONDATA/root/'
 #path = "/scratch/bptx_data_2016/"
 #path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
+path = '/afs/cern.ch/user/a/andrey/public/BRIL/RF_LHC_Fill_5423/data/root/'
 
 fill = '5423'
 
 chain = TChain("bunchTree");
+#chain.Add(path+"all_bunches_2016.root")
 chain.Add(path+"bptx_mon_bunches_2016_10_22_UTC.root")
 #chain.Add(path+"bptx_mon_bunches_2016_10_25_UTC.root")
 
 gROOT.ProcessLine(".L ~/tdrstyle.C")
-setTDRStyle()
-
+try:
+  setTDRStyle()
+except NameError:
+  print "No tdrstyle.. Well, skip it then."
+  
 # These are for studies in FILL 5423:
 T1 = TDatime(2016,10,18,12,40,00)
 T2 = TDatime(2016,10,18,12,42,00)
-T3 = TDatime(2016,10,18,15,30,00)
-T4 = TDatime(2016,10,18,15,32,00)
-#T3 = TDatime(2016,10,18,16,30,00)
-#T4 = TDatime(2016,10,18,16,32,00)
+#T3 = TDatime(2016,10,18,15,30,00)
+#T4 = TDatime(2016,10,18,15,32,00)
+T3 = TDatime(2016,10,18,16,30,00)
+T4 = TDatime(2016,10,18,16,32,00)
+T3txt = '16:30'
+
 t1 = str(T1.Convert())
 t2 = str(T2.Convert())
 t3 = str(T3.Convert())
@@ -83,8 +91,8 @@ g1.SetTitle('FILL '+fill+';BX number;Phase offset, ps')
 leg = TLegend(0.60,0.73,0.85,0.90)
 leg.AddEntry(g1,"B1 @12:40 UTC", "f")
 leg.AddEntry(g2,"B2 @12:40 UTC", "f")
-leg.AddEntry(g3,"B1 @16:30 UTC", "f")
-leg.AddEntry(g4,"B2 @16:30 UTC", "f")
+leg.AddEntry(g3,"B1 @"+T3txt+" UTC", "f")
+leg.AddEntry(g4,"B2 @"+T3txt+" UTC", "f")
 leg.SetFillColor(kWhite)
 leg.Draw()
 
