@@ -59,12 +59,12 @@ beginTime.Print()
 print '\t end time:'
 endTime.Print()
 
-path = '/home/andrey/BPTXMONDATA/'
-#path = "/scratch/bptx_data_2016/"
+#path = '/home/andrey/BPTXMONDATA/'
+path = "/scratch/bptx_data_2016/"
 #path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
 
 chain = TChain("bunchTree");
-chain.Add(path+"all_bunches_2016.root")
+chain.Add(path+"all_bunches_2016_10.root")
 
 # Integral to Intensity scale factors
 ItoIfactor1 = '0.960';
@@ -431,8 +431,10 @@ if __name__ == "__main__":
 
   '''
 
-
-  #bxList = bx_AND[0:5]
+  constOffset = 6606.6 # It's in nanosecs
+  ORB = 88924.796
+  BXlength = ORB/3564
+  #BXlength = 24.95084
 
   bxList = [60,61, 3300,3301]
 
@@ -453,7 +455,6 @@ if __name__ == "__main__":
       continue
     if b1==None: b1=''
     if b2==None: b2=''
-
 
     sh1 =  constOffset + (bx-1)*BXlength
     sh2 =  constOffset + (bx-1)*BXlength - 2.65

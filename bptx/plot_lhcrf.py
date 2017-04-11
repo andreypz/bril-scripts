@@ -5,15 +5,15 @@ gROOT.SetBatch()
 
 #path = '/home/andrey/BPTXMONDATA/'
 #path = '~/work/BPTXMONDATA/root/'
-#path = "/scratch/bptx_data_2016/"
+path = "/scratch/bptx_data_2016/"
 #path = 'root://eoscms//eos/cms/store/group/dpg_bril/comm_bril/bptx/bptx_data_2016/'
-path = '/afs/cern.ch/user/a/andrey/public/BRIL/RF_LHC_Fill_5423/data/root/'
+#path = '/afs/cern.ch/user/a/andrey/public/BRIL/RF_LHC_Fill_5423/data/root/'
 
 fill = '5423'
 
 chain = TChain("bunchTree");
-#chain.Add(path+"all_bunches_2016.root")
-chain.Add(path+"bptx_mon_bunches_2016_10_22_UTC.root")
+chain.Add(path+"all_bunches_2016_10.root")
+#chain.Add(path+"bptx_mon_bunches_2016_10_22_UTC.root")
 #chain.Add(path+"bptx_mon_bunches_2016_10_25_UTC.root")
 
 gROOT.ProcessLine(".L ~/tdrstyle.C")
